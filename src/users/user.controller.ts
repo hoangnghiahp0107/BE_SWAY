@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Query, Put, Delete, HttpCode, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Put, Delete, HttpCode, UseGuards, HttpException, HttpStatus, Request } from '@nestjs/common';
 import { ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger/dist';
+
 import { ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp } from './entities/user.entity';
+import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp, updateCustomer } from './entities/user.entity';
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login-user.dto';
 import { ResendOtpDto, SignUpDto, VerifyOtpDto } from './dto/create-user.dto';
@@ -71,4 +72,20 @@ export class UserController{
             throw new HttpException(error.message, error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard("jwt"))
+    @HttpCode(200)
+    @ApiBody({
+      type: updateCustomer,
+    })
+    @Put("/update-personal-info")
+    async updateCustomer(@Body() body: SignUpDto, @Request() req) {
+      if (body.email !== req.user.data.EMAIL) {
+        throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
+      }
+      
+      return this.userService.updateCustomer(body);
+    }
+    
 }

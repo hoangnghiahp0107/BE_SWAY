@@ -32,4 +32,14 @@ export class resendOtp {
     email: string
 }
 
+export class updateCustomer {
+    @ApiProperty()
+    fullname: string
+    @ApiProperty()
+    email: string
+    @ApiProperty()
+    password: string
+    @ApiProperty({ enum: ['MALE', 'FEMALE', 'OTHER'] })
+    gender: 'MALE' | 'FEMALE' | 'OTHER';
+}
 

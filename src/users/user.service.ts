@@ -19,7 +19,6 @@ export class UserService {
     async signUp(customerSignUp: SignUpDto) {
         const { fullname, email, phone, password, gender } = customerSignUp;
     
-        // Kiểm tra email hoặc số điện thoại đã tồn tại
         const existingCustomer = await this.model.cUSTOMER.findFirst({
             where: {
                 OR: [{ EMAIL: email }, { PHONE: phone }],
@@ -35,7 +34,6 @@ export class UserService {
             }
         }
     
-        // Băm mật khẩu và tạo tài khoản
         const hashedPassword = await bcrypt.hash(password, 10);
         const newCustomer = await this.model.cUSTOMER.create({
             data: {
@@ -71,7 +69,6 @@ export class UserService {
         }
     }
     
-    // Hàm gửi email OTP
     async sendOtpEmail(email: string, otp: string) {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -88,7 +85,6 @@ export class UserService {
             text: `Mã OTP của bạn là: ${otp}`, 
         };
     
-        // Gửi email và trả về kết quả
         try {
             await transporter.sendMail(mailOptions);
         } catch (error) {
@@ -187,7 +183,7 @@ export class UserService {
     
     async login(customerLogin: LoginDto) {
         const customer = await this.model.cUSTOMER.findFirst({
-            where: { EMAIL: customerLogin.email },  
+            where: { EMAIL: customerLogin.email  },  
         });
     
         if (!customer) {
@@ -227,5 +223,35 @@ export class UserService {
         }
     }
     
+    async updateCustomer(customerUpdate: SignUpDto) {
+        try {
+            const { email, fullname, password, gender } = customerUpdate;
+            
+            const existingUser = await this.model.cUSTOMER.findFirst({
+                where: { EMAIL: email }
+            });
+        
+            if (!existingUser) {
+                throw new HttpException(`Người dùng không tồn tại: ${email}`, HttpStatus.NOT_FOUND);
+            }
+        
+            const updatedData: any = {};
+            if (fullname) updatedData.FULLNAME = fullname;
+            if (password) updatedData.PASSWORD = await bcrypt.hash(password, 10);
+            if (gender) updatedData.GENDER = gender;
+        
+            if (Object.keys(updatedData).length > 0) {
+                await this.model.cUSTOMER.update({
+                    where: { EMAIL: email },
+                    data: updatedData
+                });
+            }
+        
+            return { message: 'Cập nhật thông tin thành công' };
+        } catch (error) {
+            console.error('Lỗi khi cập nhật thông tin:', error);  
+            throw new HttpException(error.response?.message || 'Lỗi hệ thống', error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }    
 }
   
