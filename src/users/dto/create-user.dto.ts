@@ -5,6 +5,8 @@ export class SignUpDto {
     password: string;
     gender: 'MALE' | 'FEMALE' | 'OTHER';  // Giới tính
     active: boolean;
+    birthday: Date;
+    avarta: string;
 }
 
 export class VerifyOtpDto {

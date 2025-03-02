@@ -11,6 +11,10 @@ export class SignUpCustomer {
     password: string
     @ApiProperty({ enum: ['MALE', 'FEMALE', 'OTHER'] })
     gender: 'MALE' | 'FEMALE' | 'OTHER';
+    @ApiProperty()
+    birthday: Date
+    @ApiProperty()
+    avarta: string
 }
 
 export class LoginCustomer {

@@ -17,7 +17,7 @@ export class UserService {
     model = new PrismaClient();
     
     async signUp(customerSignUp: SignUpDto) {
-        const { fullname, email, phone, password, gender } = customerSignUp;
+        const { fullname, email, phone, password, gender, birthday } = customerSignUp;
     
         const existingCustomer = await this.model.cUSTOMER.findFirst({
             where: {
@@ -43,6 +43,8 @@ export class UserService {
                 PASSWORD: hashedPassword,
                 GENDER: gender,  
                 ACTIVE: false,  
+                BIRTHDAY: birthday,
+                AVARTA: "noimg.png"
             },
         });
     

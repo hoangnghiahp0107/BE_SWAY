@@ -27,6 +27,8 @@ model CUSTOMER {
   EMAIL             String?             @unique(map: "EMAIL") @db.VarChar(100)
   PHONE             String              @unique(map: "PHONE") @db.VarChar(15)
   PASSWORD          String              @db.VarChar(255)
+  BIRTHDAY          DateTime?           @db.Date
+  AVARTA            String              @db.VarChar(255)
   CREATED_AT        DateTime?           @default(now()) @db.Timestamp(0)
   GENDER            CUSTOMER_GENDER?    @default(OTHER)
   ACTIVE            Boolean?            @default(true)
@@ -46,10 +48,14 @@ model DRIVER {
   EMAIL         String?         @unique(map: "EMAIL") @db.VarChar(100)
   PHONE         String          @unique(map: "PHONE") @db.VarChar(15)
   PASSWORD      String          @db.VarChar(255)
+  BIRTHDAY      DateTime        @db.Date
+  AVARTA        String          @db.VarChar(255)
   STATUS        DRIVER_STATUS?  @default(AVAILABLE)
   LICENSE       String          @unique(map: "LICENSE") @db.VarChar(20)
   VEHICLE_COLOR String          @db.VarChar(50)
   VEHICLE_MODEL String          @db.VarChar(50)
+  CCCD          String          @db.VarChar(12)
+  CRC           String          @db.VarChar(255)
   CREATED_AT    DateTime?       @default(now()) @db.Timestamp(0)
   GENDER        DRIVER_GENDER?  @default(OTHER)
   ACTIVE        Boolean?        @default(true)
