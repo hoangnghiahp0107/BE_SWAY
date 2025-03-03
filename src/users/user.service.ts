@@ -15,10 +15,8 @@ export class UserService {
       
     ) { } 
     model = new PrismaClient();
-    
-    async signUp(customerSignUp: SignUpDto) {
-        const { fullname, email, phone, password, gender, birthday } = customerSignUp;
-    
+
+    async checkEmailAndPhoneExistence(email: string, phone: string) {
         const existingCustomer = await this.model.cUSTOMER.findFirst({
             where: {
                 OR: [{ EMAIL: email }, { PHONE: phone }],
@@ -32,7 +30,15 @@ export class UserService {
             if (existingCustomer.PHONE === phone) {
                 throw new HttpException('Số điện thoại đã tồn tại', HttpStatus.CONFLICT);
             }
-        }
+        }    
+        return true;
+    }
+    
+    
+    async signUp(customerSignUp: SignUpDto) {
+        const { fullname, email, phone, password, gender, birthday } = customerSignUp;
+    
+        await this.checkEmailAndPhoneExistence(email, phone);
     
         const hashedPassword = await bcrypt.hash(password, 10);
         const newCustomer = await this.model.cUSTOMER.create({
@@ -43,7 +49,7 @@ export class UserService {
                 PASSWORD: hashedPassword,
                 GENDER: gender,  
                 ACTIVE: false,  
-                BIRTHDAY: birthday,
+                BIRTHDAY: new Date(birthday),
                 AVARTA: "noimg.png"
             },
         });

@@ -3,7 +3,7 @@ import { ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger/dist';
 
 import { ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp, updateCustomer } from './entities/user.entity';
+import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp, updateCustomer, checkEmailAndPhone } from './entities/user.entity';
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login-user.dto';
 import { ResendOtpDto, SignUpDto, VerifyOtpDto } from './dto/create-user.dto';
@@ -29,6 +29,16 @@ export class UserController{
     @Post('/SignUp')
     signUp(@Body() body: SignUpDto) {
       return this.userService.signUp(body);
+    }
+
+    @HttpCode(200)
+    @ApiBody({
+      type: checkEmailAndPhone
+    })
+    @Post('/checkEmailAndPhoneExistence')
+    checkEmailAndPhoneExistence(@Body() body: { email: string, phone: string }) {
+      const { email, phone } = body;
+      return this.userService.checkEmailAndPhoneExistence(email, phone);
     }
 
     @HttpCode(200)

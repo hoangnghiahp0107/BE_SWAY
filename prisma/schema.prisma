@@ -27,7 +27,7 @@ model CUSTOMER {
   EMAIL             String?             @unique(map: "EMAIL") @db.VarChar(100)
   PHONE             String              @unique(map: "PHONE") @db.VarChar(15)
   PASSWORD          String              @db.VarChar(255)
-  BIRTHDAY          DateTime?           @db.Date
+  BIRTHDAY          DateTime            @db.Date
   AVARTA            String              @db.VarChar(255)
   CREATED_AT        DateTime?           @default(now()) @db.Timestamp(0)
   GENDER            CUSTOMER_GENDER?    @default(OTHER)

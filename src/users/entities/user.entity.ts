@@ -12,7 +12,7 @@ export class SignUpCustomer {
     @ApiProperty({ enum: ['MALE', 'FEMALE', 'OTHER'] })
     gender: 'MALE' | 'FEMALE' | 'OTHER';
     @ApiProperty()
-    birthday: Date
+    birthday: String
     @ApiProperty()
     avarta: string
 }
@@ -23,6 +23,14 @@ export class LoginCustomer {
     @ApiProperty()
     password: string
 }
+
+export class checkEmailAndPhone {
+    @ApiProperty()
+    email: string
+    @ApiProperty()
+    phone: string
+}
+
 
 export class verifyOtp {
     @ApiProperty()

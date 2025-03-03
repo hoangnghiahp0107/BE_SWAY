@@ -5,7 +5,7 @@ export class SignUpDto {
     password: string;
     gender: 'MALE' | 'FEMALE' | 'OTHER';  // Giới tính
     active: boolean;
-    birthday: Date;
+    birthday: string;
     avarta: string;
 }
 
