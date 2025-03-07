@@ -8,15 +8,13 @@ datasource db {
 }
 
 model CHAT_MESSAGE {
-  MESSAGE_ID    Int                        @id @default(autoincrement())
-  TRIP_ID       Int
-  SENDER_ID     Int
-  SENDER_TYPE   CHAT_MESSAGE_SENDER_TYPE
-  RECEIVER_ID   Int
-  RECEIVER_TYPE CHAT_MESSAGE_RECEIVER_TYPE
-  CONTENT       String                     @db.Text
-  SENT_AT       DateTime?                  @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY  TRIP_HISTORY               @relation(fields: [TRIP_ID], references: [TRIP_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_1")
+  MESSAGE_ID   Int          @id @default(autoincrement())
+  TRIP_ID      Int
+  SENDER_ID    Int
+  RECEIVER_ID  Int
+  CONTENT      String       @db.Text
+  SENT_AT      DateTime?    @default(now()) @db.Timestamp(0)
+  TRIP_HISTORY TRIP_HISTORY @relation(fields: [TRIP_ID], references: [TRIP_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_1")
 
   @@index([TRIP_ID], map: "idx_chat_trip")
 }
@@ -24,7 +22,7 @@ model CHAT_MESSAGE {
 model CUSTOMER {
   CUSTOMER_ID       Int                 @id @default(autoincrement())
   FULLNAME          String              @db.VarChar(100)
-  EMAIL             String?             @unique(map: "EMAIL") @db.VarChar(100)
+  EMAIL             String              @unique(map: "EMAIL") @db.VarChar(100)
   PHONE             String              @unique(map: "PHONE") @db.VarChar(15)
   PASSWORD          String              @db.VarChar(255)
   BIRTHDAY          DateTime            @db.Date
@@ -32,10 +30,11 @@ model CUSTOMER {
   CREATED_AT        DateTime?           @default(now()) @db.Timestamp(0)
   GENDER            CUSTOMER_GENDER?    @default(OTHER)
   ACTIVE            Boolean?            @default(true)
+  LATITUDE          Decimal?            @db.Decimal(10, 6)
+  LONGITUDE         Decimal?            @db.Decimal(10, 6)
   DRIVER_RATING     DRIVER_RATING[]
   FAVORITE_LOCATION FAVORITE_LOCATION[]
   OTP               OTP[]
-  PAYMENT           PAYMENT[]
   TRIP_HISTORY      TRIP_HISTORY[]
 
   @@index([EMAIL], map: "idx_customer_email")
@@ -45,22 +44,22 @@ model CUSTOMER {
 model DRIVER {
   DRIVER_ID     Int             @id @default(autoincrement())
   FULLNAME      String          @db.VarChar(100)
-  EMAIL         String?         @unique(map: "EMAIL") @db.VarChar(100)
+  EMAIL         String          @unique(map: "EMAIL") @db.VarChar(100)
   PHONE         String          @unique(map: "PHONE") @db.VarChar(15)
   PASSWORD      String          @db.VarChar(255)
   BIRTHDAY      DateTime        @db.Date
   AVARTA        String          @db.VarChar(255)
-  STATUS        DRIVER_STATUS?  @default(AVAILABLE)
-  LICENSE       String          @unique(map: "LICENSE") @db.VarChar(20)
-  VEHICLE_COLOR String          @db.VarChar(50)
-  VEHICLE_MODEL String          @db.VarChar(50)
-  CCCD          String          @db.VarChar(12)
-  CRC           String          @db.VarChar(255)
+  STATUS        DRIVER_STATUS?  @default(OFF)
+  LICENSE       String?         @db.VarChar(20)
+  CCCD          String?         @db.VarChar(12)
+  CRC           String?         @db.VarChar(255)
   CREATED_AT    DateTime?       @default(now()) @db.Timestamp(0)
   GENDER        DRIVER_GENDER?  @default(OTHER)
   ACTIVE        Boolean?        @default(true)
+  LATITUDE      Decimal?        @db.Decimal(10, 6)
+  LONGITUDE     Decimal?        @db.Decimal(10, 6)
   DRIVER_RATING DRIVER_RATING[]
-  PAYMENT       PAYMENT[]
+  OTP           OTP[]
   TRIP_HISTORY  TRIP_HISTORY[]
   VEHICLE       VEHICLE[]
 
@@ -101,42 +100,37 @@ model FAVORITE_LOCATION {
 
 model OTP {
   OTP_ID      Int       @id @default(autoincrement())
-  CUSTOMER_ID Int
+  CUSTOMER_ID Int?
+  DRIVER_ID   Int?
   OTP_CODE    String    @db.VarChar(6)
   EXPIRES_AT  DateTime  @db.Timestamp(0)
   CREATED_AT  DateTime? @default(now()) @db.Timestamp(0)
-  CUSTOMER    CUSTOMER  @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "OTP_ibfk_1")
+  CUSTOMER    CUSTOMER? @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "OTP_ibfk_1")
+  DRIVER      DRIVER?   @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "OTP_ibfk_2")
 
   @@index([CUSTOMER_ID], map: "CUSTOMER_ID")
+  @@index([DRIVER_ID], map: "DRIVER_ID")
 }
 
 model PAYMENT {
   PAYMENT_ID     Int                     @id @default(autoincrement())
-  TRIP_ID        Int
-  CUSTOMER_ID    Int
-  DRIVER_ID      Int
   AMOUNT         Decimal                 @db.Decimal(10, 2)
   PAYMENT_METHOD PAYMENT_PAYMENT_METHOD
   PAYMENT_STATUS PAYMENT_PAYMENT_STATUS? @default(PENDING)
   PAYMENT_DATE   DateTime?               @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY   TRIP_HISTORY            @relation(fields: [TRIP_ID], references: [TRIP_ID], onDelete: Cascade, onUpdate: NoAction, map: "PAYMENT_ibfk_1")
-  CUSTOMER       CUSTOMER                @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "PAYMENT_ibfk_2")
-  DRIVER         DRIVER                  @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "PAYMENT_ibfk_3")
-
-  @@index([CUSTOMER_ID], map: "CUSTOMER_ID")
-  @@index([DRIVER_ID], map: "DRIVER_ID")
-  @@index([TRIP_ID], map: "idx_payment_trip")
+  TRIP_HISTORY   TRIP_HISTORY[]
 }
 
 model PROMOTION {
-  PROMOTION_ID     Int              @id @default(autoincrement())
-  PROMO_CODE       String           @unique(map: "PROMO_CODE") @db.VarChar(50)
-  DISCOUNT_PERCENT Decimal          @db.Decimal(5, 2)
-  MAX_DISCOUNT     Decimal          @db.Decimal(10, 2)
-  VALID_FROM       DateTime         @db.Date
-  VALID_TO         DateTime         @db.Date
-  CREATED_AT       DateTime?        @default(now()) @db.Timestamp(0)
-  TRIP_PROMOTION   TRIP_PROMOTION[]
+  PROMOTION_ID     Int            @id @default(autoincrement())
+  PROMO_CODE       String         @unique(map: "PROMO_CODE") @db.VarChar(50)
+  DISCOUNT_PERCENT Decimal        @db.Decimal(5, 2)
+  MAX_DISCOUNT     Decimal        @db.Decimal(10, 2)
+  MINIMUM_PURCHASE Decimal        @db.Decimal(10, 2)
+  VALID_FROM       DateTime       @db.Date
+  VALID_TO         DateTime       @db.Date
+  CREATED_AT       DateTime?      @default(now()) @db.Timestamp(0)
+  TRIP_HISTORY     TRIP_HISTORY[]
 
   @@index([PROMO_CODE], map: "idx_promo_code")
 }
@@ -154,24 +148,28 @@ model ROUTE {
 }
 
 model TRIP_HISTORY {
-  TRIP_ID        Int                  @id @default(autoincrement())
-  CUSTOMER_ID    Int
-  DRIVER_ID      Int
-  VEHICLE_ID     Int
-  ROUTE_ID       Int
-  START_TIME     DateTime?            @default(now()) @db.Timestamp(0)
-  END_TIME       DateTime?            @db.Timestamp(0)
-  TOTAL_FARE     Decimal              @db.Decimal(10, 2)
-  STATUS         TRIP_HISTORY_STATUS? @default(ONGOING)
-  CHAT_MESSAGE   CHAT_MESSAGE[]
-  DRIVER_RATING  DRIVER_RATING?
-  PAYMENT        PAYMENT[]
-  CUSTOMER       CUSTOMER             @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_1")
-  DRIVER         DRIVER               @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_2")
-  VEHICLE        VEHICLE              @relation(fields: [VEHICLE_ID], references: [VEHICLE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_3")
-  ROUTE          ROUTE                @relation(fields: [ROUTE_ID], references: [ROUTE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_4")
-  TRIP_PROMOTION TRIP_PROMOTION[]
+  TRIP_ID       Int                  @id @default(autoincrement())
+  CUSTOMER_ID   Int
+  DRIVER_ID     Int
+  VEHICLE_ID    Int
+  ROUTE_ID      Int
+  PAYMENT_ID    Int
+  START_TIME    DateTime?            @default(now()) @db.Timestamp(0)
+  END_TIME      DateTime?            @db.Timestamp(0)
+  TOTAL_FARE    Decimal              @db.Decimal(10, 2)
+  PROMOTION_ID  Int?
+  STATUS        TRIP_HISTORY_STATUS? @default(ONGOING)
+  CHAT_MESSAGE  CHAT_MESSAGE[]
+  DRIVER_RATING DRIVER_RATING?
+  CUSTOMER      CUSTOMER             @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_1")
+  DRIVER        DRIVER               @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_2")
+  VEHICLE       VEHICLE              @relation(fields: [VEHICLE_ID], references: [VEHICLE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_3")
+  ROUTE         ROUTE                @relation(fields: [ROUTE_ID], references: [ROUTE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_4")
+  PAYMENT       PAYMENT              @relation(fields: [PAYMENT_ID], references: [PAYMENT_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_5")
+  PROMOTION     PROMOTION?           @relation(fields: [PROMOTION_ID], references: [PROMOTION_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_6")
 
+  @@index([PAYMENT_ID], map: "PAYMENT_ID")
+  @@index([PROMOTION_ID], map: "PROMOTION_ID")
   @@index([ROUTE_ID], map: "ROUTE_ID")
   @@index([VEHICLE_ID], map: "VEHICLE_ID")
   @@index([CUSTOMER_ID], map: "idx_trip_customer")
@@ -179,40 +177,35 @@ model TRIP_HISTORY {
   @@index([STATUS], map: "idx_trip_status")
 }
 
-model TRIP_PROMOTION {
-  TRIP_ID      Int
-  PROMOTION_ID Int
-  APPLIED_AT   DateTime?    @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY TRIP_HISTORY @relation(fields: [TRIP_ID], references: [TRIP_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_PROMOTION_ibfk_1")
-  PROMOTION    PROMOTION    @relation(fields: [PROMOTION_ID], references: [PROMOTION_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_PROMOTION_ibfk_2")
-
-  @@id([TRIP_ID, PROMOTION_ID])
-  @@index([PROMOTION_ID], map: "PROMOTION_ID")
-}
-
 model VEHICLE {
-  VEHICLE_ID    Int            @id @default(autoincrement())
-  DRIVER_ID     Int
-  LICENSE_PLATE String         @unique(map: "LICENSE_PLATE") @db.VarChar(20)
-  VEHICLE_COLOR String         @db.VarChar(50)
-  VEHICLE_MODEL String         @db.VarChar(50)
-  VEHICLE_YEAR  Int            @db.Year
-  CREATED_AT    DateTime?      @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY  TRIP_HISTORY[]
-  DRIVER        DRIVER         @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "VEHICLE_ibfk_1")
+  VEHICLE_ID      Int            @id @default(autoincrement())
+  DRIVER_ID       Int
+  LICENSE_PLATE   String         @unique(map: "LICENSE_PLATE") @db.VarChar(20)
+  VEHICLE_COLOR   String         @db.VarChar(50)
+  VEHICLE_MODEL   String         @db.VarChar(50)
+  VEHICLE_YEAR    Int            @db.Year
+  VEHICLE_TYPE_ID Int
+  CREATED_AT      DateTime?      @default(now()) @db.Timestamp(0)
+  TRIP_HISTORY    TRIP_HISTORY[]
+  DRIVER          DRIVER         @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "VEHICLE_ibfk_1")
+  VEHICLE_TYPE    VEHICLE_TYPE   @relation(fields: [VEHICLE_TYPE_ID], references: [VEHICLE_TYPE_ID], onDelete: Cascade, onUpdate: NoAction, map: "VEHICLE_ibfk_2")
 
   @@index([DRIVER_ID], map: "DRIVER_ID")
+  @@index([VEHICLE_TYPE_ID], map: "VEHICLE_TYPE_ID")
   @@index([LICENSE_PLATE], map: "idx_vehicle_license_plate")
 }
 
-enum CHAT_MESSAGE_SENDER_TYPE {
-  CUSTOMER
-  DRIVER
+model VEHICLE_TYPE {
+  VEHICLE_TYPE_ID Int                       @id @default(autoincrement())
+  VEHICLE_TYPE    VEHICLE_TYPE_VEHICLE_TYPE
+  PRICE           Int
+  VEHICLE         VEHICLE[]
 }
 
-enum CHAT_MESSAGE_RECEIVER_TYPE {
-  CUSTOMER
-  DRIVER
+enum VEHICLE_TYPE_VEHICLE_TYPE {
+  Xe_m_y   @map("Xe máy")
+  Xe_4_ch_ @map("Xe 4 chỗ")
+  Xe_7_ch_ @map("Xe 7 chỗ")
 }
 
 enum PAYMENT_PAYMENT_METHOD {
@@ -221,16 +214,16 @@ enum PAYMENT_PAYMENT_METHOD {
   E_WALLET    @map("E-WALLET")
 }
 
-enum DRIVER_STATUS {
-  AVAILABLE
-  ON_TRIP   @map("ON TRIP")
-  OFF
-}
-
 enum PAYMENT_PAYMENT_STATUS {
   PENDING
   COMPLETED
   FAILED
+}
+
+enum DRIVER_STATUS {
+  AVAILABLE
+  ON_TRIP   @map("ON TRIP")
+  OFF
 }
 
 enum CUSTOMER_GENDER {

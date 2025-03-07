@@ -6,9 +6,10 @@ import { UserModule } from './users/user.module';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { TripModule } from './trips/trip.module';
 import { FavoriteModule } from './favorites/favorite.module';
+import { DriverModule } from './drivers/driver.module';
 
 @Module({
-  imports: [ UserModule, TripModule, FavoriteModule, ConfigModule.forRoot({ isGlobal: true }),
+  imports: [ UserModule, DriverModule, TripModule, FavoriteModule, ConfigModule.forRoot({ isGlobal: true }),
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],

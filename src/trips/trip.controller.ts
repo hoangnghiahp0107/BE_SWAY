@@ -18,7 +18,7 @@
             const customer_id  = req.user.data.CUSTOMER_ID;
             const requestedCustomerId = parseInt(req.query.customer_id);
             if (customer_id !== requestedCustomerId) {
-                throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
+                throw new HttpException('Bạn chỉ có thể xem thông tin của chính mình', HttpStatus.FORBIDDEN);
             }
         
             return this.tripService.getTripHistory(customer_id);

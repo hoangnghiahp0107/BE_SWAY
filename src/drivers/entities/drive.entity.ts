@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class SignUpCustomer {
+export class SignUpDriver {
     @ApiProperty()
     fullname: string
     @ApiProperty()
@@ -17,14 +17,14 @@ export class SignUpCustomer {
     avarta: string
 }
 
-export class LoginCustomer {
+export class LoginDriver {
     @ApiProperty()
     email: string
     @ApiProperty()
     password: string
 }
 
-export class checkEmailAndPhone {
+export class checkEmailAndPhoneDriver {
     @ApiProperty()
     email: string
     @ApiProperty()
@@ -32,19 +32,19 @@ export class checkEmailAndPhone {
 }
 
 
-export class verifyOtp {
+export class verifyOtpDriver {
     @ApiProperty()
     email: string
     @ApiProperty()
     otp_code: string
 }
 
-export class resendOtp {
+export class resendOtpDriver {
     @ApiProperty()
     email: string
 }
 
-export class updateCustomer {
+export class updateDriver {
     @ApiProperty()
     fullname: string
     @ApiProperty()
@@ -53,11 +53,13 @@ export class updateCustomer {
     phone: string
     @ApiProperty()
     password: string
-    @ApiProperty()
-    birthday: string
-    @ApiProperty()
-    avarta: string
     @ApiProperty({ enum: ['MALE', 'FEMALE', 'OTHER'] })
     gender: 'MALE' | 'FEMALE' | 'OTHER';
+    @ApiProperty()
+    cccd: string
+    @ApiProperty()
+    crc: string
+    @ApiProperty()
+    license: string
 }
 

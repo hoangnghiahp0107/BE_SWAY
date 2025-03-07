@@ -86,16 +86,63 @@ export class UserController{
     @ApiBearerAuth()
     @UseGuards(AuthGuard("jwt"))
     @HttpCode(200)
+    @ApiQuery({ name: 'customer_id', required: true })
     @ApiBody({
       type: updateCustomer,
     })
     @Put("/update-personal-info")
     async updateCustomer(@Body() body: SignUpDto, @Request() req) {
-      if (body.email !== req.user.data.EMAIL) {
-        throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
-      }
-      
-      return this.userService.updateCustomer(body);
+        const customer_id = req.user.data.CUSTOMER_ID;  
+        const requestedCustomerID = parseInt(req.query.customer_id);  
+        if (isNaN(requestedCustomerID)) {
+          throw new HttpException('Invalid customer ID', HttpStatus.BAD_REQUEST);
+        }
+        if (customer_id !== requestedCustomerID) {
+            throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
+        }
+    
+        return this.userService.updateCustomer({...body, customer_id});
+    }
+  
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard("jwt"))
+    @HttpCode(200)
+    @ApiQuery({ name: 'customer_id', required: true })
+    @Get("/get-infomation-customer")
+    async getInfoCustomer(@Request() req) {
+        const customer_id  = req.user.data.CUSTOMER_ID;
+        const requestedCustomerId = parseInt(req.query.customer_id);
+        if (customer_id !== requestedCustomerId) {
+            throw new HttpException('Bạn chỉ có thể xem thông tin của chính mình', HttpStatus.FORBIDDEN);
+        }
+    
+        return this.userService.getInfoCustomer(customer_id);
     }
     
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard("jwt"))
+    @HttpCode(200)
+    @ApiQuery({ name: 'customer_id', required: true, type: Number })
+    @ApiQuery({ name: 'vehicle_type_id', required: true, type: Number })
+    @Get("/find-driver")
+    async findDriver(
+        @Request() req 
+    ) {
+        try {
+            const customer_id = req.user.data.CUSTOMER_ID;
+            const requestedCustomerId = parseInt(req.query.customer_id);
+            const vehicle_type_id = parseInt(req.query.vehicle_type_id);
+
+            if (customer_id !== requestedCustomerId) {
+                throw new HttpException('Bạn chỉ có thể xem thông tin của chính mình', HttpStatus.FORBIDDEN);
+            }
+    
+            return await this.userService.findDriver(customer_id, vehicle_type_id);
+        } catch (error) {
+            throw new HttpException(
+                error.response?.message || 'Lỗi hệ thống',
+                error.status || HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
 }

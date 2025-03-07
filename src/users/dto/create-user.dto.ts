@@ -1,9 +1,10 @@
 export class SignUpDto {
+    customer_id: number;
     fullname: string;
     email: string;
     phone: string;
     password: string;
-    gender: 'MALE' | 'FEMALE' | 'OTHER';  // Giới tính
+    gender: 'MALE' | 'FEMALE' | 'OTHER';
     active: boolean;
     birthday: string;
     avarta: string;
