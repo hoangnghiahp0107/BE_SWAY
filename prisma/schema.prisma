@@ -112,69 +112,47 @@ model OTP {
   @@index([DRIVER_ID], map: "DRIVER_ID")
 }
 
-model PAYMENT {
-  PAYMENT_ID     Int                     @id @default(autoincrement())
-  AMOUNT         Decimal                 @db.Decimal(10, 2)
-  PAYMENT_METHOD PAYMENT_PAYMENT_METHOD
-  PAYMENT_STATUS PAYMENT_PAYMENT_STATUS? @default(PENDING)
-  PAYMENT_DATE   DateTime?               @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY   TRIP_HISTORY[]
-}
-
 model PROMOTION {
-  PROMOTION_ID     Int            @id @default(autoincrement())
-  PROMO_CODE       String         @unique(map: "PROMO_CODE") @db.VarChar(50)
-  DISCOUNT_PERCENT Decimal        @db.Decimal(5, 2)
-  MAX_DISCOUNT     Decimal        @db.Decimal(10, 2)
-  MINIMUM_PURCHASE Decimal        @db.Decimal(10, 2)
+  PROMOTION_CODE   String         @id @db.VarChar(50)
+  DISCOUNT_PERCENT Int
+  MAX_DISCOUNT     Int
+  MINIMUM_PURCHASE Int
   VALID_FROM       DateTime       @db.Date
   VALID_TO         DateTime       @db.Date
   CREATED_AT       DateTime?      @default(now()) @db.Timestamp(0)
   TRIP_HISTORY     TRIP_HISTORY[]
 
-  @@index([PROMO_CODE], map: "idx_promo_code")
-}
-
-model ROUTE {
-  ROUTE_ID            Int                  @id @default(autoincrement())
-  PICKUP_POINT        String               @db.VarChar(255)
-  DROPOFF_POINT       String               @db.VarChar(255)
-  PICKUP_COORDINATES  Unsupported("point")
-  DROPOFF_COORDINATES Unsupported("point")
-  TRIP_HISTORY        TRIP_HISTORY[]
-
-  @@index([DROPOFF_COORDINATES(length: 32)], map: "idx_dropoff_coordinates")
-  @@index([PICKUP_COORDINATES(length: 32)], map: "idx_pickup_coordinates")
+  @@index([PROMOTION_CODE], map: "idx_promotion_code")
 }
 
 model TRIP_HISTORY {
-  TRIP_ID       Int                  @id @default(autoincrement())
-  CUSTOMER_ID   Int
-  DRIVER_ID     Int
-  VEHICLE_ID    Int
-  ROUTE_ID      Int
-  PAYMENT_ID    Int
-  START_TIME    DateTime?            @default(now()) @db.Timestamp(0)
-  END_TIME      DateTime?            @db.Timestamp(0)
-  TOTAL_FARE    Decimal              @db.Decimal(10, 2)
-  PROMOTION_ID  Int?
-  STATUS        TRIP_HISTORY_STATUS? @default(ONGOING)
-  CHAT_MESSAGE  CHAT_MESSAGE[]
-  DRIVER_RATING DRIVER_RATING?
-  CUSTOMER      CUSTOMER             @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_1")
-  DRIVER        DRIVER               @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_2")
-  VEHICLE       VEHICLE              @relation(fields: [VEHICLE_ID], references: [VEHICLE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_3")
-  ROUTE         ROUTE                @relation(fields: [ROUTE_ID], references: [ROUTE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_4")
-  PAYMENT       PAYMENT              @relation(fields: [PAYMENT_ID], references: [PAYMENT_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_5")
-  PROMOTION     PROMOTION?           @relation(fields: [PROMOTION_ID], references: [PROMOTION_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_6")
+  TRIP_ID             Int                          @id @default(autoincrement())
+  CUSTOMER_ID         Int
+  DRIVER_ID           Int
+  VEHICLE_ID          Int
+  START_TIME          DateTime?                    @default(now()) @db.Timestamp(0)
+  END_TIME            DateTime?                    @db.Timestamp(0)
+  TOTAL_FARE          Int
+  PROMOTION_CODE      String?                      @db.VarChar(50)
+  PICKUP_POINT        String                       @db.VarChar(255)
+  DROPOFF_POINT       String                       @db.VarChar(255)
+  PICKUP_COORDINATES  Unsupported("point")
+  DROPOFF_COORDINATES Unsupported("point")
+  STATUS              TRIP_HISTORY_STATUS?         @default(ONGOING)
+  PAYMENT_METHOD      TRIP_HISTORY_PAYMENT_METHOD
+  PAYMENT_STATUS      TRIP_HISTORY_PAYMENT_STATUS? @default(PENDING)
+  CHAT_MESSAGE        CHAT_MESSAGE[]
+  DRIVER_RATING       DRIVER_RATING?
+  CUSTOMER            CUSTOMER                     @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_1")
+  DRIVER              DRIVER                       @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_2")
+  VEHICLE             VEHICLE                      @relation(fields: [VEHICLE_ID], references: [VEHICLE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_3")
+  PROMOTION           PROMOTION?                   @relation(fields: [PROMOTION_CODE], references: [PROMOTION_CODE], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_4")
 
-  @@index([PAYMENT_ID], map: "PAYMENT_ID")
-  @@index([PROMOTION_ID], map: "PROMOTION_ID")
-  @@index([ROUTE_ID], map: "ROUTE_ID")
   @@index([VEHICLE_ID], map: "VEHICLE_ID")
   @@index([CUSTOMER_ID], map: "idx_trip_customer")
   @@index([DRIVER_ID], map: "idx_trip_driver")
   @@index([STATUS], map: "idx_trip_status")
+  @@index([PROMOTION_CODE], map: "PROMOTION_CODE")
 }
 
 model VEHICLE {
@@ -208,18 +186,6 @@ enum VEHICLE_TYPE_VEHICLE_TYPE {
   Xe_7_ch_ @map("Xe 7 chỗ")
 }
 
-enum PAYMENT_PAYMENT_METHOD {
-  CASH
-  CREDIT_CARD
-  E_WALLET    @map("E-WALLET")
-}
-
-enum PAYMENT_PAYMENT_STATUS {
-  PENDING
-  COMPLETED
-  FAILED
-}
-
 enum DRIVER_STATUS {
   AVAILABLE
   ON_TRIP   @map("ON TRIP")
@@ -242,4 +208,16 @@ enum DRIVER_GENDER {
   MALE
   FEMALE
   OTHER
+}
+
+enum TRIP_HISTORY_PAYMENT_METHOD {
+  CASH
+  CREDIT_CARD
+  E_WALLET    @map("E-WALLET")
+}
+
+enum TRIP_HISTORY_PAYMENT_STATUS {
+  PENDING
+  COMPLETED
+  FAILED
 }

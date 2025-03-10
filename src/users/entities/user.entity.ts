@@ -61,3 +61,28 @@ export class updateCustomer {
     gender: 'MALE' | 'FEMALE' | 'OTHER';
 }
 
+export class findLocation{
+    @ApiProperty()
+    latitude: string
+    @ApiProperty()
+    longitude: string
+}
+
+export class bookingDriver{
+    @ApiProperty()
+    vehicle_type_id: number
+    @ApiProperty()
+    promotion_code: string
+    @ApiProperty()
+    pickup_point: string
+    @ApiProperty()
+    dropoff_point: string
+    @ApiProperty()
+    pickup_coordinates: { lat: number; lng: number }
+    @ApiProperty()
+    dropoff_coordinates: { lat: number; lng: number }
+    @ApiProperty()
+    payment_method: "CASH" | "CREDIT_CARD" | "E-WALLET";
+    @ApiProperty()
+    payment_status: "COMPLETED" | "PENDING" | "FAILED";
+}

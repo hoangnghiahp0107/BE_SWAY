@@ -3,7 +3,7 @@ import { ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger/dist';
 
 import { ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp, updateCustomer, checkEmailAndPhone } from './entities/user.entity';
+import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp, updateCustomer, checkEmailAndPhone, findLocation, bookingDriver } from './entities/user.entity';
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login-user.dto';
 import { ResendOtpDto, SignUpDto, VerifyOtpDto } from './dto/create-user.dto';
@@ -145,4 +145,57 @@ export class UserController{
             );
         }
     }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
+    @HttpCode(200)
+    @ApiQuery({ name: 'customer_id', required: true, type: Number })
+    @Put('/find-user-location')
+    async updateUserLocation(@Request() req, @Body() body: findLocation) {
+        try {  
+            const customer_id  = req.user.data.CUSTOMER_ID;
+            const requestedCustomerId = parseInt(req.query.customer_id);
+            if (customer_id !== requestedCustomerId) {
+                throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
+            }
+            // Call service to find user location
+            return await this.userService.updateUserLocation(customer_id, body.latitude, body.longitude);
+    
+        } catch (error) {
+            console.error('Lỗi khi tìm vị trí người dùng:', error);
+            throw new HttpException(
+                error.message || 'Lỗi hệ thống',
+                error.status || HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
+    @HttpCode(200)
+    @ApiQuery({ name: 'customer_id', required: true, type: Number })
+    @Post('/booking-driver')
+    async bookingDriver(@Request() req, @Body() body: bookingDriver) {
+        try {
+            // Lấy customer_id từ thông tin người dùng đã xác thực
+            const customer_id = req.user.data.CUSTOMER_ID;
+            
+            // Lấy customer_id từ query
+            const requestedCustomerId = parseInt(req.query.customer_id);
+    
+            // Kiểm tra quyền truy cập: đảm bảo người dùng chỉ có thể đặt xe cho chính mình
+            if (customer_id !== requestedCustomerId) {
+                throw new HttpException('Bạn chỉ có thể đặt xe cho chính mình', HttpStatus.FORBIDDEN);
+            }
+            
+            // Gọi service để thực hiện đặt xe
+            return await this.userService.bookingDriver(customer_id, body);
+        } catch (error) {
+            console.error('Lỗi khi đặt xe:', error);
+            throw new HttpException(
+                error.message || 'Lỗi hệ thống',
+                error.status || HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }    
 }
