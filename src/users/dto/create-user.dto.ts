@@ -8,6 +8,10 @@ export class SignUpDto {
     active: boolean;
     birthday: string;
     avarta: string;
+
+    old_password?: string;  // 🟢 Mật khẩu cũ
+    new_password?: string;  // 🟢 Mật khẩu mới
+    confirm_password?: string; // 🟢 Xác nhận mật khẩu mới
 }
 
 export class VerifyOtpDto {
