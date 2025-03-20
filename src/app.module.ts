@@ -7,9 +7,16 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { TripModule } from './trips/trip.module';
 import { FavoriteModule } from './favorites/favorite.module';
 import { DriverModule } from './drivers/driver.module';
+import { DriverRatingModule } from './driver-rating/driver-rating.module'; // Import DriverRatingModule
 
 @Module({
-  imports: [ UserModule, DriverModule, TripModule, FavoriteModule, ConfigModule.forRoot({ isGlobal: true }),
+  imports: [
+    UserModule,
+    DriverModule,
+    TripModule,
+    FavoriteModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    DriverRatingModule, // Thêm module đánh giá tài xế
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
