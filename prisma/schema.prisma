@@ -8,14 +8,19 @@ datasource db {
 }
 
 model CHAT_MESSAGE {
-  MESSAGE_ID   Int          @id @default(autoincrement())
+  MESSAGE_ID   Int                      @id @default(autoincrement())
   TRIP_ID      Int
-  SENDER_ID    Int
-  RECEIVER_ID  Int
-  CONTENT      String       @db.Text
-  SENT_AT      DateTime?    @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY TRIP_HISTORY @relation(fields: [TRIP_ID], references: [TRIP_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_1")
+  DRIVER_ID    Int
+  CUSTOMER_ID  Int
+  SENDER_TYPE  CHAT_MESSAGE_SENDER_TYPE
+  CONTENT      String                   @db.Text
+  SENT_AT      DateTime?                @default(now()) @db.Timestamp(0)
+  TRIP_HISTORY TRIP_HISTORY             @relation(fields: [TRIP_ID], references: [TRIP_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_1")
+  DRIVER       DRIVER                   @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_2")
+  CUSTOMER     CUSTOMER                 @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_3")
 
+  @@index([CUSTOMER_ID], map: "CUSTOMER_ID")
+  @@index([DRIVER_ID], map: "DRIVER_ID")
   @@index([TRIP_ID], map: "idx_chat_trip")
 }
 
@@ -32,10 +37,12 @@ model CUSTOMER {
   ACTIVE            Boolean?            @default(true)
   LATITUDE          Decimal?            @db.Decimal(10, 6)
   LONGITUDE         Decimal?            @db.Decimal(10, 6)
+  CHAT_MESSAGE      CHAT_MESSAGE[]
   DRIVER_RATING     DRIVER_RATING[]
   FAVORITE_LOCATION FAVORITE_LOCATION[]
   OTP               OTP[]
   TRIP_HISTORY      TRIP_HISTORY[]
+  WALLET            WALLET[]
 
   @@index([EMAIL], map: "idx_customer_email")
   @@index([PHONE], map: "idx_customer_phone")
@@ -58,10 +65,12 @@ model DRIVER {
   ACTIVE        Boolean?        @default(true)
   LATITUDE      Decimal?        @db.Decimal(10, 6)
   LONGITUDE     Decimal?        @db.Decimal(10, 6)
+  CHAT_MESSAGE  CHAT_MESSAGE[]
   DRIVER_RATING DRIVER_RATING[]
   OTP           OTP[]
   TRIP_HISTORY  TRIP_HISTORY[]
   VEHICLE       VEHICLE[]
+  WALLET        WALLET[]
 
   @@index([EMAIL], map: "idx_driver_email")
   @@index([PHONE], map: "idx_driver_phone")
@@ -148,11 +157,11 @@ model TRIP_HISTORY {
   VEHICLE             VEHICLE                      @relation(fields: [VEHICLE_ID], references: [VEHICLE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_3")
   PROMOTION           PROMOTION?                   @relation(fields: [PROMOTION_CODE], references: [PROMOTION_CODE], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_4")
 
+  @@index([PROMOTION_CODE], map: "PROMOTION_CODE")
   @@index([VEHICLE_ID], map: "VEHICLE_ID")
   @@index([CUSTOMER_ID], map: "idx_trip_customer")
   @@index([DRIVER_ID], map: "idx_trip_driver")
   @@index([STATUS], map: "idx_trip_status")
-  @@index([PROMOTION_CODE], map: "PROMOTION_CODE")
 }
 
 model VEHICLE {
@@ -180,10 +189,45 @@ model VEHICLE_TYPE {
   VEHICLE         VEHICLE[]
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model WALLET {
+  WALLET_ID          Int                  @id @default(autoincrement())
+  CUSTOMER_ID        Int?
+  DRIVER_ID          Int?
+  BALANCE            Decimal?             @default(0.00) @db.Decimal(15, 2)
+  CREATED_AT         DateTime?            @default(now()) @db.Timestamp(0)
+  UPDATED_AT         DateTime?            @default(now()) @db.Timestamp(0)
+  CUSTOMER           CUSTOMER?            @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "WALLET_ibfk_1")
+  DRIVER             DRIVER?              @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "WALLET_ibfk_2")
+  WALLET_TRANSACTION WALLET_TRANSACTION[]
+
+  @@index([CUSTOMER_ID], map: "CUSTOMER_ID")
+  @@index([DRIVER_ID], map: "DRIVER_ID")
+}
+
+model WALLET_TRANSACTION {
+  TRANSACTION_ID   Int                                 @id @default(autoincrement())
+  WALLET_ID        Int
+  AMOUNT           Decimal                             @db.Decimal(15, 2)
+  TRANSACTION_TYPE WALLET_TRANSACTION_TRANSACTION_TYPE
+  TRANSACTION_DATE DateTime?                           @default(now()) @db.Timestamp(0)
+  DESCRIPTION      String?                             @db.VarChar(255)
+  STATUS           WALLET_TRANSACTION_STATUS?          @default(PENDING)
+  ORDERCODE        String?                             @db.VarChar(50)
+  WALLET           WALLET                              @relation(fields: [WALLET_ID], references: [WALLET_ID], onDelete: Cascade, onUpdate: NoAction, map: "WALLET_TRANSACTION_ibfk_1")
+
+  @@index([WALLET_ID], map: "WALLET_ID")
+}
+
 enum VEHICLE_TYPE_VEHICLE_TYPE {
   Xe_m_y   @map("Xe máy")
   Xe_4_ch_ @map("Xe 4 chỗ")
   Xe_7_ch_ @map("Xe 7 chỗ")
+}
+
+enum CHAT_MESSAGE_SENDER_TYPE {
+  CUSTOMER
+  DRIVER
 }
 
 enum DRIVER_STATUS {
@@ -217,6 +261,18 @@ enum TRIP_HISTORY_PAYMENT_METHOD {
 }
 
 enum TRIP_HISTORY_PAYMENT_STATUS {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum WALLET_TRANSACTION_TRANSACTION_TYPE {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum WALLET_TRANSACTION_STATUS {
   PENDING
   COMPLETED
   FAILED

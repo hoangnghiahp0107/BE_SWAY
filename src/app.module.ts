@@ -8,6 +8,8 @@ import { TripModule } from './trips/trip.module';
 import { FavoriteModule } from './favorites/favorite.module';
 import { DriverModule } from './drivers/driver.module';
 import { DriverRatingModule } from './driver-rating/driver-rating.module'; // Import DriverRatingModule
+import { ChatsGateway } from './chats/chat.gateway';
+import { WalletModule } from './wallets/wallet.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { DriverRatingModule } from './driver-rating/driver-rating.module'; // Im
     DriverModule,
     TripModule,
     FavoriteModule,
+    ChatsGateway,
+    WalletModule,
     ConfigModule.forRoot({ isGlobal: true }),
     DriverRatingModule, // Thêm module đánh giá tài xế
   ],
