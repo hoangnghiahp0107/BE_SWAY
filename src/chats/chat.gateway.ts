@@ -1,38 +1,120 @@
 import {
-    MessageBody,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
-    SubscribeMessage,
-    WebSocketGateway,
-    WebSocketServer,
-  } from '@nestjs/websockets';
-  
-  import { Socket, Server } from 'socket.io'; 
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Socket, Server } from 'socket.io';
+import { PrismaClient } from '@prisma/client';
 
-  @WebSocketGateway(3002, { cors:{origin: '*'} })
+@WebSocketGateway(5000, { cors: { origin: '*' } })
+export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer()
+  server: Server;
 
-  export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    @WebSocketServer()
-    server: Server;
+  private prisma: PrismaClient;
 
-    handleConnection(client: Socket){
-        console.log("New user connected..", client.id);
+  constructor() {
+    this.prisma = new PrismaClient();
+  }
 
-        client.broadcast.emit('user-joined', {
-            message: `New User Joined the chat: ${client.id}`,
+  handleConnection(client: Socket) {
+    console.log('New user connected..', client.id);
+
+    client.broadcast.emit('user-joined', {
+      message: `New User Joined the chat: ${client.id}`,
+    });
+  }
+
+  handleDisconnect(client: Socket) {
+    console.log('User disconnected..', client.id);
+
+    this.server.emit('user-left', {
+      message: `User Left the chat: ${client.id}`,
+    });
+  }
+
+  @SubscribeMessage('new message')
+  async handleNewMessage(
+    @MessageBody() data: {
+      tripId: number;
+      driverId: number;
+      customerId: number;
+      senderType: 'CUSTOMER' | 'DRIVER';
+      content: string;
+    }
+  ) {
+    const { tripId, driverId, customerId, senderType, content } = data;
+
+    try {
+      // Check if the trip exists
+      const trip = await this.prisma.tRIP_HISTORY.findUnique({
+        where: { TRIP_ID: tripId },
+      });
+
+      if (!trip) {
+        console.log('Trip does not exist');
+        return;
+      }
+
+      let driver;
+      let customer;
+
+      // Fetch customer and driver based on senderType
+      if (senderType === 'CUSTOMER') {
+        customer = await this.prisma.cUSTOMER.findUnique({
+          where: { CUSTOMER_ID: customerId },
         });
-    }
-
-    handleDisconnect(client: any) {
-        console.log("user disconnected..", client.id);
-
-        this.server.emit('user-left', {
-            message: `User Left the chat: ${client.id}`,
+        driver = await this.prisma.dRIVER.findUnique({
+          where: { DRIVER_ID: driverId },
         });
-    }
 
-    @SubscribeMessage("new message")
-    handleNewMessage(@MessageBody() message: string){
-        this.server.emit("message", message);
+        if (!customer || !driver) {
+          console.log('Invalid customer or driver');
+          return;
+        }
+      }
+
+      if (senderType === 'DRIVER') {
+        driver = await this.prisma.dRIVER.findUnique({
+          where: { DRIVER_ID: driverId },
+        });
+        customer = await this.prisma.cUSTOMER.findUnique({
+          where: { CUSTOMER_ID: customerId },
+        });
+
+        if (!driver || !customer) {
+          console.log('Invalid driver or customer');
+          return;
+        }
+      }
+
+      // Save message to the database
+      const newMessage = await this.prisma.cHAT_MESSAGE.create({
+        data: {
+          TRIP_ID: tripId,
+          DRIVER_ID: driverId,
+          CUSTOMER_ID: customerId , 
+          SENDER_TYPE: senderType,
+          CONTENT: content,
+        },
+      });
+
+      console.log('Message saved to the database:', newMessage);
+
+      // Emit the message to all connected clients
+      this.server.emit('message', {
+        tripId,
+        driverId,
+        senderType,
+        customerId,
+        content,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error saving message:', error);
     }
+  }
 }

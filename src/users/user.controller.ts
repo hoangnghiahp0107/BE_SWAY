@@ -108,7 +108,7 @@ export class UserController{
     @UseGuards(AuthGuard("jwt"))
     @HttpCode(200)
     @ApiQuery({ name: 'customer_id', required: true })
-    @Get("/get-infomation-customer")
+    @Get("/get-information-customer")
     async getInfoCustomer(@Request() req) {
         const customer_id  = req.user.data.CUSTOMER_ID;
         const requestedCustomerId = parseInt(req.query.customer_id);
