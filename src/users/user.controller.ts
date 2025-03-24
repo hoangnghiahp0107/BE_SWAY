@@ -7,6 +7,7 @@ import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp, updateCustomer, ch
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login-user.dto';
 import { ResendOtpDto, SignUpDto, VerifyOtpDto } from './dto/create-user.dto';
+import { BookingDriver } from './dto/booking.dto';
 
 @ApiTags("User Management")
 @Controller('/api/UserManagement')
@@ -118,75 +119,47 @@ export class UserController{
     
         return this.userService.getInfoCustomer(customer_id);
     }
-    
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard("jwt"))
-    @HttpCode(200)
-    @ApiQuery({ name: 'customer_id', required: true, type: Number })
-    @ApiQuery({ name: 'vehicle_type_id', required: true, type: Number })
-    @Get("/find-driver")
-    async findDriver(
-        @Request() req 
-    ) {
-        try {
-            const customer_id = req.user.data.CUSTOMER_ID;
-            const requestedCustomerId = parseInt(req.query.customer_id);
-            const vehicle_type_id = parseInt(req.query.vehicle_type_id);
 
-            if (customer_id !== requestedCustomerId) {
-                throw new HttpException('Bạn chỉ có thể xem thông tin của chính mình', HttpStatus.FORBIDDEN);
-            }
     
-            return await this.userService.findDriver(customer_id, vehicle_type_id);
-        } catch (error) {
-            throw new HttpException(
-                error.response?.message || 'Lỗi hệ thống',
-                error.status || HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-    }
+    
+    // @ApiBearerAuth()
+    // @UseGuards(AuthGuard("jwt"))
+    // @HttpCode(200)
+    // @ApiQuery({ name: 'customer_id', required: true, type: Number })
+    // @ApiQuery({ name: 'vehicle_type_id', required: true, type: Number })
+    // @Get("/find-driver")
+    // async findDriver(
+    //     @Request() req 
+    // ) {
+    //     try {
+    //         const customer_id = req.user.data.CUSTOMER_ID;
+    //         const requestedCustomerId = parseInt(req.query.customer_id);
+    //         const vehicle_type_id = parseInt(req.query.vehicle_type_id);
 
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    @HttpCode(200)
-    @ApiQuery({ name: 'customer_id', required: true, type: Number })
-    @Put('/find-user-location')
-    async updateUserLocation(@Request() req, @Body() body: findLocation) {
-        try {  
-            const customer_id  = req.user.data.CUSTOMER_ID;
-            const requestedCustomerId = parseInt(req.query.customer_id);
-            if (customer_id !== requestedCustomerId) {
-                throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
-            }
-            // Call service to find user location
-            return await this.userService.updateUserLocation(customer_id, body.latitude, body.longitude);
+    //         if (customer_id !== requestedCustomerId) {
+    //             throw new HttpException('Bạn chỉ có thể xem thông tin của chính mình', HttpStatus.FORBIDDEN);
+    //         }
     
-        } catch (error) {
-            console.error('Lỗi khi tìm vị trí người dùng:', error);
-            throw new HttpException(
-                error.message || 'Lỗi hệ thống',
-                error.status || HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-    }
+    //         return await this.userService.findDriver(customer_id, vehicle_type_id);
+    //     } catch (error) {
+    //         throw new HttpException(
+    //             error.response?.message || 'Lỗi hệ thống',
+    //             error.status || HttpStatus.INTERNAL_SERVER_ERROR
+    //         );
+    //     }
+    // }
+
+
 
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
     @HttpCode(200)
-    @ApiQuery({ name: 'customer_id', required: true, type: Number })
     @Post('/booking-driver')
-    async bookingDriver(@Request() req, @Body() body: bookingDriver) {
+    @ApiBody({ type: bookingDriver })
+    async bookingDriver(@Request() req, @Body() body: BookingDriver) {
         try {
-            // Lấy customer_id từ thông tin người dùng đã xác thực
+            // Lấy customer_id từ thông tin người dùng đã xác thực trong token
             const customer_id = req.user.data.CUSTOMER_ID;
-            
-            // Lấy customer_id từ query
-            const requestedCustomerId = parseInt(req.query.customer_id);
-    
-            // Kiểm tra quyền truy cập: đảm bảo người dùng chỉ có thể đặt xe cho chính mình
-            if (customer_id !== requestedCustomerId) {
-                throw new HttpException('Bạn chỉ có thể đặt xe cho chính mình', HttpStatus.FORBIDDEN);
-            }
             
             // Gọi service để thực hiện đặt xe
             return await this.userService.bookingDriver(customer_id, body);
@@ -197,5 +170,5 @@ export class UserController{
                 error.status || HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
-    }    
+    }  
 }

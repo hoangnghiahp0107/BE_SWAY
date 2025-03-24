@@ -9,8 +9,6 @@ import { depositWallet } from './entities/wallet.entity';
 @Controller('/api/WalletManagement')
 export class WalletController {
     constructor(private readonly walletService: WalletService) {}
-
-    // POST: Nạp tiền vào ví
     @Post('/deposit-wallet')
     @ApiBody({ type: depositWallet })
     @ApiBearerAuth()

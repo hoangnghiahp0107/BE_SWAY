@@ -41,7 +41,7 @@ export class WalletService {
               const wallet = await this.model.wALLET.findFirst({
                   where: { DRIVER_ID: driver_id },
               });
-              if (!wallet) {
+              if (!wallet) {    
                   throw new HttpException('Driver does not have a wallet', HttpStatus.NOT_FOUND);
               }
               walletId = wallet.WALLET_ID;

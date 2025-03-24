@@ -254,196 +254,115 @@ export class UserService {
         }
     }
 
-    async findDriver(customer_id: number, vehicle_type_id: number) {
-        try {
-            const vehicles = await this.model.vEHICLE.findMany({
-                where: { VEHICLE_TYPE_ID: vehicle_type_id },
-                select: { DRIVER_ID: true },
-            });
+    // async findDriver(customer_id: number, vehicle_type_id: number) {
+    //     try {
+    //         const vehicles = await this.model.vEHICLE.findMany({
+    //             where: { VEHICLE_TYPE_ID: vehicle_type_id },
+    //             select: { DRIVER_ID: true },
+    //         });
     
-            if (vehicles.length === 0 || !vehicles.some(vehicle => vehicle.DRIVER_ID)) {
-                throw new HttpException('Không có xe hoặc tài xế không hợp lệ', HttpStatus.BAD_REQUEST);
-            }
+    //         if (vehicles.length === 0 || !vehicles.some(vehicle => vehicle.DRIVER_ID)) {
+    //             throw new HttpException('Không có xe hoặc tài xế không hợp lệ', HttpStatus.BAD_REQUEST);
+    //         }
     
-            // Lấy danh sách tất cả các DRIVER_ID
-            const driverIds = vehicles.map(vehicle => vehicle.DRIVER_ID);
+    //         // Lấy danh sách tất cả các DRIVER_ID
+    //         const driverIds = vehicles.map(vehicle => vehicle.DRIVER_ID);
     
-            // Lấy thông tin khách hàng
-            const customer = await this.model.cUSTOMER.findUnique({
-                where: { CUSTOMER_ID: customer_id },
-                select: { LATITUDE: true, LONGITUDE: true },
-            });
+    //         // Lấy thông tin khách hàng
+    //         const customer = await this.model.cUSTOMER.findUnique({
+    //             where: { CUSTOMER_ID: customer_id },
+    //             select: { LATITUDE: true, LONGITUDE: true },
+    //         });
     
-            // Kiểm tra nếu thông tin khách hàng không hợp lệ
-            if (!customer || customer.LATITUDE === null || customer.LONGITUDE === null) {
-                throw new HttpException('Tọa độ khách hàng không hợp lệ hoặc không tồn tại', HttpStatus.BAD_REQUEST);
-            }
+    //         // Kiểm tra nếu thông tin khách hàng không hợp lệ
+    //         if (!customer || customer.LATITUDE === null || customer.LONGITUDE === null) {
+    //             throw new HttpException('Tọa độ khách hàng không hợp lệ hoặc không tồn tại', HttpStatus.BAD_REQUEST);
+    //         }
         
-            const lat = parseFloat(customer.LATITUDE.toString());
-            const lon = parseFloat(customer.LONGITUDE.toString());
+    //         const lat = parseFloat(customer.LATITUDE.toString());
+    //         const lon = parseFloat(customer.LONGITUDE.toString());
     
-            if (isNaN(lat) || isNaN(lon)) {
-                throw new HttpException('Tọa độ khách hàng không hợp lệ', HttpStatus.BAD_REQUEST);
-            }
+    //         if (isNaN(lat) || isNaN(lon)) {
+    //             throw new HttpException('Tọa độ khách hàng không hợp lệ', HttpStatus.BAD_REQUEST);
+    //         }
     
-            let radius = 1;
-            let drivers: DRIVER[] = [];
+    //         let radius = 1;
+    //         let drivers: DRIVER[] = [];
     
-            // Tìm các tài xế trong bán kính 10km từ vị trí khách hàng
-            while (radius <= 10) {
-                drivers = await this.model.dRIVER.findMany({
-                    where: {
-                        AND: [
-                            {
-                                LATITUDE: {
-                                    gte: lat - (radius / 111),
-                                    lte: lat + (radius / 111),
-                                },
-                            },
-                            {
-                                LONGITUDE: {
-                                    gte: lon - (radius / (111 * Math.cos(lat * Math.PI / 180))),
-                                    lte: lon + (radius / (111 * Math.cos(lat * Math.PI / 180))),
-                                },
-                            },
-                            {
-                                DRIVER_ID: {
-                                    in: driverIds, // Tìm tài xế có DRIVER_ID nằm trong danh sách driverIds
-                                },
-                            },
-                            {
-                                STATUS: "AVAILABLE",
-                            }
-                        ],
-                    },
-                    include: {
-                        VEHICLE: true
-                    },
-                    take: 5,
-                });
+    //         // Tìm các tài xế trong bán kính 10km từ vị trí khách hàng
+    //         while (radius <= 5) {
+    //             drivers = await this.model.dRIVER.findMany({
+    //                 where: {
+    //                     AND: [
+    //                         {
+    //                             LATITUDE: {
+    //                                 gte: lat - (radius / 111),
+    //                                 lte: lat + (radius / 111),
+    //                             },
+    //                         },
+    //                         {
+    //                             LONGITUDE: {
+    //                                 gte: lon - (radius / (111 * Math.cos(lat * Math.PI / 180))),
+    //                                 lte: lon + (radius / (111 * Math.cos(lat * Math.PI / 180))),
+    //                             },
+    //                         },
+    //                         {
+    //                             DRIVER_ID: {
+    //                                 in: driverIds, // Tìm tài xế có DRIVER_ID nằm trong danh sách driverIds
+    //                             },
+    //                         },
+    //                         {
+    //                             STATUS: "AVAILABLE",
+    //                         }
+    //                     ],
+    //                 },
+    //                 include: {
+    //                     VEHICLE: true
+    //                 },
+    //                 take: 5,
+    //             });
     
-                if (drivers.length > 0) {
-                    break;
-                }
+    //             if (drivers.length > 0) {
+    //                 break;
+    //             }
     
-                radius += 1;
-            }
+    //             radius += 1;
+    //         }
     
-            // Nếu không tìm thấy tài xế trong bán kính 10km
-            if (drivers.length === 0) {
-                throw new HttpException('Không tìm thấy tài xế trong bán kính 10 km', HttpStatus.NOT_FOUND);
-            }
+    //         // Nếu không tìm thấy tài xế trong bán kính 10km
+    //         if (drivers.length === 0) {
+    //             throw new HttpException('Không tìm thấy tài xế trong bán kính 5 km', HttpStatus.NOT_FOUND);
+    //         }
     
-            return drivers;
-        } catch (error) {
-            console.error('Lỗi khi tìm tài xế:', error);
-            throw new HttpException(error.response?.message || 'Lỗi hệ thống', error.status || HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    //         return drivers;
+    //     } catch (error) {
+    //         console.error('Lỗi khi tìm tài xế:', error);
+    //         throw new HttpException(error.response?.message || 'Lỗi hệ thống', error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    //     }
+    // }
 
-    async updateUserLocation(customer_id: number, latitude: string, longitude: string) {
-        try {
-            // Kiểm tra dữ liệu hiện tại trước khi cập nhật
-            const existingCustomer = await this.model.cUSTOMER.findUnique({
-                where: { CUSTOMER_ID: customer_id },
-                select: { LATITUDE: true, LONGITUDE: true },
-            });
-    
-            if (!existingCustomer) {
-                throw new HttpException('Không tìm thấy khách hàng', HttpStatus.NOT_FOUND);
-            }
-    
-            console.log('Dữ liệu trước khi cập nhật:', existingCustomer);
-    
-            // Lấy dữ liệu tọa độ từ một nguồn
-            const coordinates = await this.getUserCoordinates(customer_id);
-    
-            if (!coordinates || !coordinates.LATITUDE || !coordinates.LONGITUDE) {
-                throw new HttpException('Không lấy được tọa độ', HttpStatus.BAD_REQUEST);
-            }
-    
-            const updatedData: any = {
-                LATITUDE: latitude,
-                LONGITUDE: longitude
-            };
-    
-            const location = await this.model.cUSTOMER.update({
-                where: { CUSTOMER_ID: customer_id },
-                data: updatedData
-            });
-    
-            console.log('Dữ liệu sau khi cập nhật:', location);
-            return location;
-    
-        } catch (error) {
-            console.error('Lỗi khi cập nhật vị trí người dùng:', error);
-            throw new HttpException(
-                error.response?.message || 'Lỗi hệ thống',
-                error.status || HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-    }
-    
-    async getUserCoordinates(customer_id: number) {        
-        const coordinates = await this.model.cUSTOMER.findFirst({
-            where:{
-                CUSTOMER_ID: customer_id
-            },
-            select:{
-                LATITUDE: true,
-                LONGITUDE: true
-            }
-        });
-    
-        console.log('Dữ liệu tọa độ lấy được:', coordinates);
-        return coordinates;
-    }
-    
+
+
     async bookingDriver(customer_id: number, bookingDriver: BookingDriver) {
         try {
-            const { 
-                vehicle_type_id, 
-                promotion_code, 
-                pickup_point, 
-                dropoff_point, 
-                pickup_coordinates, 
-                dropoff_coordinates, 
-                payment_method, 
-                payment_status 
+            let {
+                driver_id,
+                total_fare,
+                promotion_code,
+                pickup_point,
+                pickup_coordinates,
+                dropoff_point,
+                dropoff_coordinates,
+                payment_method,
+                payment_status,
             } = bookingDriver;
     
-            // Kiểm tra đầu vào: Đảm bảo các tham số quan trọng được cung cấp
-            if (!customer_id || !vehicle_type_id || !pickup_coordinates || !dropoff_coordinates || !pickup_point || !dropoff_point || !payment_method || !payment_status) {
-                throw new Error('Thiếu thông tin quan trọng như ID khách hàng, loại phương tiện, tọa độ, điểm đón, điểm trả, phương thức thanh toán hoặc trạng thái thanh toán.');
+            // Kiểm tra và đảm bảo total_fare là một số hợp lệ
+            if (isNaN(total_fare) || total_fare <= 0) {
+                throw new Error('Total fare không hợp lệ');
             }
     
-            // Ensure coordinates are provided correctly
-            if (!pickup_coordinates.lat || !pickup_coordinates.lng || !dropoff_coordinates.lat || !dropoff_coordinates.lng) {
-                throw new Error('Tọa độ điểm đón và trả không hợp lệ.');
-            }
-    
-            // Tính khoảng cách giữa hai điểm (đơn vị km)
-            const distance = this.calculateDistance(
-                pickup_coordinates.lat,
-                pickup_coordinates.lng,
-                dropoff_coordinates.lat,
-                dropoff_coordinates.lng
-            );
-    
-            // Lấy giá từ bảng VEHICLE_TYPE theo vehicle_type_id
-            const vehicleType = await this.model.vEHICLE_TYPE.findFirst({
-                where: { VEHICLE_TYPE_ID: vehicle_type_id },
-                select: { PRICE: true }
-            });
-    
-            if (!vehicleType) {
-                throw new Error('Không tìm thấy loại phương tiện với ID tương ứng.');
-            }
-    
-            // Tính total_fare (giá * khoảng cách)
-            let totalFare = vehicleType.PRICE * distance;
-    
-            // Kiểm tra và tính toán giảm giá nếu có mã khuyến mãi
+            // Kiểm tra mã giảm giá (promotion_code) nếu có
             if (promotion_code) {
                 const promotion = await this.model.pROMOTION.findFirst({
                     where: { PROMOTION_CODE: promotion_code },
@@ -461,76 +380,183 @@ export class UserService {
                 }
     
                 // Kiểm tra điều kiện mua tối thiểu để áp dụng khuyến mãi
-                if (totalFare < promotion.MINIMUM_PURCHASE) {
+                if (total_fare < promotion.MINIMUM_PURCHASE) {
                     throw new Error(`Đơn hàng của bạn chưa đủ điều kiện để áp dụng mã khuyến mãi. Đơn hàng tối thiểu là ${promotion.MINIMUM_PURCHASE}.`);
                 }
     
                 // Tính số tiền giảm giá (theo phần trăm) và đảm bảo không vượt quá giới hạn giảm giá tối đa
-                const discountAmount = totalFare * (promotion.DISCOUNT_PERCENT / 100);
+                const discountAmount = total_fare * (promotion.DISCOUNT_PERCENT / 100);
                 const finalDiscount = discountAmount > promotion.MAX_DISCOUNT ? promotion.MAX_DISCOUNT : discountAmount;
     
                 // Áp dụng giảm giá
-                totalFare = totalFare - finalDiscount;
+                total_fare = total_fare - finalDiscount;
             }
     
-            // Lấy tài xế gần điểm đón (dựa trên phương thức findDriver)
-            const availableDrivers = await this.findDriver(customer_id, vehicle_type_id);
-    
-            if (availableDrivers.length === 0) {
-                throw new Error('Không tìm thấy tài xế phù hợp trong khu vực.');
-            }
-    
-            // Tìm tài xế có ít cuốc nhất trong ngày
-            const driverWithLeastTrips = await this.findDriverWithLeastTrips(availableDrivers);
-    
-            if (!driverWithLeastTrips) {
-                throw new Error('Không thể tìm được tài xế có ít cuốc nhất.');
-            }
-    
-            // Chuyển đổi tọa độ thành WKT (Well-Known Text) cho ST_GeomFromText
             const pickupPointWKT = `POINT(${pickup_coordinates.lng} ${pickup_coordinates.lat})`;
             const dropoffPointWKT = `POINT(${dropoff_coordinates.lng} ${dropoff_coordinates.lat})`;
     
-            // Lấy thông tin phương tiện của tài xế đã chọn
-            const vehicle = await this.model.vEHICLE.findFirst({
-                where: {
-                    DRIVER_ID: driverWithLeastTrips.DRIVER_ID,
-                    VEHICLE_TYPE_ID: vehicle_type_id,
-                },
-                select: { VEHICLE_ID: true },
-            });
-    
-            if (!vehicle) {
-                throw new Error('Không tìm thấy phương tiện phù hợp với tài xế.');
-            }
-    
-            // Chèn thông tin vào bảng TRIP_HISTORY, bao gồm các thông tin thanh toán và điểm đón, điểm trả
-            const newBooking = await this.model.$queryRaw`
+            // Thực hiện truy vấn SQL với giá trị đã được kiểm tra
+            await this.model.$queryRaw`
                 INSERT INTO TRIP_HISTORY 
-                (CUSTOMER_ID, DRIVER_ID, VEHICLE_ID, PICKUP_POINT, DROPOFF_POINT, PICKUP_COORDINATES, DROPOFF_COORDINATES, TOTAL_FARE, PROMOTION_CODE, PAYMENT_METHOD, PAYMENT_STATUS) 
+                (CUSTOMER_ID, DRIVER_ID, PICKUP_POINT, DROPOFF_POINT, PICKUP_COORDINATES, DROPOFF_COORDINATES, TOTAL_FARE, PROMOTION_CODE, PAYMENT_METHOD, PAYMENT_STATUS) 
                 VALUES 
-                (${customer_id}, ${driverWithLeastTrips.DRIVER_ID}, ${vehicle.VEHICLE_ID}, ${pickup_point}, ${dropoff_point}, ST_GeomFromText(${pickupPointWKT}), ST_GeomFromText(${dropoffPointWKT}), ${totalFare}, ${promotion_code ? promotion_code : null}, ${payment_method}, ${payment_status})
+                (${customer_id}, ${driver_id}, ${pickup_point}, ${dropoff_point}, ST_GeomFromText(${pickupPointWKT}), ST_GeomFromText(${dropoffPointWKT}), ${total_fare}, ${promotion_code ? promotion_code : null}, ${payment_method}, ${payment_status})
             `;
     
+            // Cập nhật trạng thái tài xế
             await this.model.$queryRaw`
-            UPDATE DRIVER 
-            SET STATUS = 'ON TRIP' 
-            WHERE DRIVER_ID = ${driverWithLeastTrips.DRIVER_ID}
+                UPDATE DRIVER 
+                SET STATUS = 'ON TRIP' 
+                WHERE DRIVER_ID = ${driver_id}
             `;
     
             return {
                 message: 'Bạn đã đặt xe thành công!',
                 statusCode: HttpStatus.OK,
-                data: { newBooking }
             };
         } catch (error) {
-            console.error('Lỗi khi người dùng đặt xe:', error);
+            console.error('Lỗi khi xử lý đặt xe:', error);
             throw new HttpException(
-                error.message || 'Lỗi hệ thống',
+                error.message || 'Lỗi hệ thống khi xử lý đặt xe',
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
     }
+    
+    
+    
+    // async bookingDriver(customer_id: number, bookingDriver: BookingDriver) {
+    //     try {
+    //         const { 
+    //             vehicle_type_id, 
+    //             promotion_code, 
+    //             pickup_point, 
+    //             dropoff_point, 
+    //             pickup_coordinates, 
+    //             dropoff_coordinates, 
+    //             payment_method, 
+    //             payment_status 
+    //         } = bookingDriver;
+    
+    //         // Kiểm tra đầu vào: Đảm bảo các tham số quan trọng được cung cấp
+    //         if (!customer_id || !vehicle_type_id || !pickup_coordinates || !dropoff_coordinates || !pickup_point || !dropoff_point || !payment_method || !payment_status) {
+    //             throw new Error('Thiếu thông tin quan trọng như ID khách hàng, loại phương tiện, tọa độ, điểm đón, điểm trả, phương thức thanh toán hoặc trạng thái thanh toán.');
+    //         }
+    
+    //         // Ensure coordinates are provided correctly
+    //         if (!pickup_coordinates.lat || !pickup_coordinates.lng || !dropoff_coordinates.lat || !dropoff_coordinates.lng) {
+    //             throw new Error('Tọa độ điểm đón và trả không hợp lệ.');
+    //         }
+    
+    //         // Tính khoảng cách giữa hai điểm (đơn vị km)
+    //         const distance = this.calculateDistance(
+    //             pickup_coordinates.lat,
+    //             pickup_coordinates.lng,
+    //             dropoff_coordinates.lat,
+    //             dropoff_coordinates.lng
+    //         );
+    
+    //         // Lấy giá từ bảng VEHICLE_TYPE theo vehicle_type_id
+    //         const vehicleType = await this.model.vEHICLE_TYPE.findFirst({
+    //             where: { VEHICLE_TYPE_ID: vehicle_type_id },
+    //             select: { PRICE: true }
+    //         });
+    
+    //         if (!vehicleType) {
+    //             throw new Error('Không tìm thấy loại phương tiện với ID tương ứng.');
+    //         }
+    
+    //         // Tính total_fare (giá * khoảng cách)
+    //         let totalFare = vehicleType.PRICE * distance;
+    
+    //         // Kiểm tra và tính toán giảm giá nếu có mã khuyến mãi
+            // if (promotion_code) {
+            //     const promotion = await this.model.pROMOTION.findFirst({
+            //         where: { PROMOTION_CODE: promotion_code },
+            //         select: { DISCOUNT_PERCENT: true, MAX_DISCOUNT: true, MINIMUM_PURCHASE: true, VALID_FROM: true, VALID_TO: true }
+            //     });
+    
+            //     if (!promotion) {
+            //         throw new Error('Mã khuyến mãi không hợp lệ.');
+            //     }
+    
+            //     // Kiểm tra thời gian hiệu lực của mã khuyến mãi
+            //     const currentDate = new Date();
+            //     if (currentDate < new Date(promotion.VALID_FROM) || currentDate > new Date(promotion.VALID_TO)) {
+            //         throw new Error('Mã khuyến mãi không còn hiệu lực.');
+            //     }
+    
+            //     // Kiểm tra điều kiện mua tối thiểu để áp dụng khuyến mãi
+            //     if (totalFare < promotion.MINIMUM_PURCHASE) {
+            //         throw new Error(`Đơn hàng của bạn chưa đủ điều kiện để áp dụng mã khuyến mãi. Đơn hàng tối thiểu là ${promotion.MINIMUM_PURCHASE}.`);
+            //     }
+    
+            //     // Tính số tiền giảm giá (theo phần trăm) và đảm bảo không vượt quá giới hạn giảm giá tối đa
+            //     const discountAmount = totalFare * (promotion.DISCOUNT_PERCENT / 100);
+            //     const finalDiscount = discountAmount > promotion.MAX_DISCOUNT ? promotion.MAX_DISCOUNT : discountAmount;
+    
+            //     // Áp dụng giảm giá
+            //     totalFare = totalFare - finalDiscount;
+            // }
+    
+    //         // Lấy tài xế gần điểm đón (dựa trên phương thức findDriver)
+    //         const availableDrivers = await this.findDriver(customer_id, vehicle_type_id);
+    
+    //         if (availableDrivers.length === 0) {
+    //             throw new Error('Không tìm thấy tài xế phù hợp trong khu vực.');
+    //         }
+    
+    //         // Tìm tài xế có ít cuốc nhất trong ngày
+    //         const driverWithLeastTrips = await this.findDriverWithLeastTrips(availableDrivers);
+    
+    //         if (!driverWithLeastTrips) {
+    //             throw new Error('Không thể tìm được tài xế có ít cuốc nhất.');
+    //         }
+    
+    //         // Chuyển đổi tọa độ thành WKT (Well-Known Text) cho ST_GeomFromText
+    //         const pickupPointWKT = `POINT(${pickup_coordinates.lng} ${pickup_coordinates.lat})`;
+    //         const dropoffPointWKT = `POINT(${dropoff_coordinates.lng} ${dropoff_coordinates.lat})`;
+    
+    //         // Lấy thông tin phương tiện của tài xế đã chọn
+    //         const vehicle = await this.model.vEHICLE.findFirst({
+    //             where: {
+    //                 DRIVER_ID: driverWithLeastTrips.DRIVER_ID,
+    //                 VEHICLE_TYPE_ID: vehicle_type_id,
+    //             },
+    //             select: { VEHICLE_ID: true },
+    //         });
+    
+    //         if (!vehicle) {
+    //             throw new Error('Không tìm thấy phương tiện phù hợp với tài xế.');
+    //         }
+    
+    //         // Chèn thông tin vào bảng TRIP_HISTORY, bao gồm các thông tin thanh toán và điểm đón, điểm trả
+    //         const newBooking = await this.model.$queryRaw`
+    //             INSERT INTO TRIP_HISTORY 
+    //             (CUSTOMER_ID, DRIVER_ID, VEHICLE_ID, PICKUP_POINT, DROPOFF_POINT, PICKUP_COORDINATES, DROPOFF_COORDINATES, TOTAL_FARE, PROMOTION_CODE, PAYMENT_METHOD, PAYMENT_STATUS) 
+    //             VALUES 
+    //             (${customer_id}, ${driverWithLeastTrips.DRIVER_ID}, ${vehicle.VEHICLE_ID}, ${pickup_point}, ${dropoff_point}, ST_GeomFromText(${pickupPointWKT}), ST_GeomFromText(${dropoffPointWKT}), ${totalFare}, ${promotion_code ? promotion_code : null}, ${payment_method}, ${payment_status})
+    //         `;
+    
+    //         await this.model.$queryRaw`
+    //         UPDATE DRIVER 
+    //         SET STATUS = 'ON TRIP' 
+    //         WHERE DRIVER_ID = ${driverWithLeastTrips.DRIVER_ID}
+    //         `;
+    
+    //         return {
+    //             message: 'Bạn đã đặt xe thành công!',
+    //             statusCode: HttpStatus.OK,
+    //             data: { newBooking }
+    //         };
+    //     } catch (error) {
+    //         console.error('Lỗi khi người dùng đặt xe:', error);
+    //         throw new HttpException(
+    //             error.message || 'Lỗi hệ thống',
+    //             HttpStatus.INTERNAL_SERVER_ERROR
+    //         );
+    //     }
+    // }
     
     
     
