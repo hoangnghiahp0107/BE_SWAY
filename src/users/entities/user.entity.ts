@@ -70,7 +70,9 @@ export class findLocation{
 
 export class bookingDriver{
     @ApiProperty()
-    vehicle_type_id: number
+    driver_id: number
+    @ApiProperty()
+    total_fare: number
     @ApiProperty()
     promotion_code: string
     @ApiProperty()

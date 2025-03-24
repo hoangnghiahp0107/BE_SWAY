@@ -35,8 +35,6 @@ model CUSTOMER {
   CREATED_AT        DateTime?           @default(now()) @db.Timestamp(0)
   GENDER            CUSTOMER_GENDER?    @default(OTHER)
   ACTIVE            Boolean?            @default(true)
-  LATITUDE          Decimal?            @db.Decimal(10, 6)
-  LONGITUDE         Decimal?            @db.Decimal(10, 6)
   CHAT_MESSAGE      CHAT_MESSAGE[]
   DRIVER_RATING     DRIVER_RATING[]
   FAVORITE_LOCATION FAVORITE_LOCATION[]
@@ -63,8 +61,6 @@ model DRIVER {
   CREATED_AT    DateTime?       @default(now()) @db.Timestamp(0)
   GENDER        DRIVER_GENDER?  @default(OTHER)
   ACTIVE        Boolean?        @default(true)
-  LATITUDE      Decimal?        @db.Decimal(10, 6)
-  LONGITUDE     Decimal?        @db.Decimal(10, 6)
   CHAT_MESSAGE  CHAT_MESSAGE[]
   DRIVER_RATING DRIVER_RATING[]
   OTP           OTP[]
@@ -138,7 +134,6 @@ model TRIP_HISTORY {
   TRIP_ID             Int                          @id @default(autoincrement())
   CUSTOMER_ID         Int
   DRIVER_ID           Int
-  VEHICLE_ID          Int
   START_TIME          DateTime?                    @default(now()) @db.Timestamp(0)
   END_TIME            DateTime?                    @db.Timestamp(0)
   TOTAL_FARE          Int
@@ -154,28 +149,25 @@ model TRIP_HISTORY {
   DRIVER_RATING       DRIVER_RATING?
   CUSTOMER            CUSTOMER                     @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_1")
   DRIVER              DRIVER                       @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_2")
-  VEHICLE             VEHICLE                      @relation(fields: [VEHICLE_ID], references: [VEHICLE_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_3")
   PROMOTION           PROMOTION?                   @relation(fields: [PROMOTION_CODE], references: [PROMOTION_CODE], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_4")
 
   @@index([PROMOTION_CODE], map: "PROMOTION_CODE")
-  @@index([VEHICLE_ID], map: "VEHICLE_ID")
   @@index([CUSTOMER_ID], map: "idx_trip_customer")
   @@index([DRIVER_ID], map: "idx_trip_driver")
   @@index([STATUS], map: "idx_trip_status")
 }
 
 model VEHICLE {
-  VEHICLE_ID      Int            @id @default(autoincrement())
+  VEHICLE_ID      Int          @id @default(autoincrement())
   DRIVER_ID       Int
-  LICENSE_PLATE   String         @unique(map: "LICENSE_PLATE") @db.VarChar(20)
-  VEHICLE_COLOR   String         @db.VarChar(50)
-  VEHICLE_MODEL   String         @db.VarChar(50)
-  VEHICLE_YEAR    Int            @db.Year
+  LICENSE_PLATE   String       @unique(map: "LICENSE_PLATE") @db.VarChar(20)
+  VEHICLE_COLOR   String       @db.VarChar(50)
+  VEHICLE_MODEL   String       @db.VarChar(50)
+  VEHICLE_YEAR    Int          @db.Year
   VEHICLE_TYPE_ID Int
-  CREATED_AT      DateTime?      @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY    TRIP_HISTORY[]
-  DRIVER          DRIVER         @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "VEHICLE_ibfk_1")
-  VEHICLE_TYPE    VEHICLE_TYPE   @relation(fields: [VEHICLE_TYPE_ID], references: [VEHICLE_TYPE_ID], onDelete: Cascade, onUpdate: NoAction, map: "VEHICLE_ibfk_2")
+  CREATED_AT      DateTime?    @default(now()) @db.Timestamp(0)
+  DRIVER          DRIVER       @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "VEHICLE_ibfk_1")
+  VEHICLE_TYPE    VEHICLE_TYPE @relation(fields: [VEHICLE_TYPE_ID], references: [VEHICLE_TYPE_ID], onDelete: Cascade, onUpdate: NoAction, map: "VEHICLE_ibfk_2")
 
   @@index([DRIVER_ID], map: "DRIVER_ID")
   @@index([VEHICLE_TYPE_ID], map: "VEHICLE_TYPE_ID")
