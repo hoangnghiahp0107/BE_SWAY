@@ -1,6 +1,12 @@
-export class FavoriteDto {
-    customer_id: number;
+import { ApiProperty } from "@nestjs/swagger";
+
+export class FavoriteLocation {
+    @ApiProperty()
     location_name: string;
+
+    @ApiProperty()
     address: string;
-    coordinates: { lat: number; lng: number }; 
+
+    @ApiProperty()
+    coordinates: { lat: number; lng: number }; // Sửa lại kiểu tọa độ
 }

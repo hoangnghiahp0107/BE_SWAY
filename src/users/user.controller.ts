@@ -92,27 +92,36 @@ export class UserController{
       type: updateCustomer,
     })
     @Put("/update-personal-info")
-    async updateCustomer(@Body() body: SignUpDto, @Request() req) {
-        const customer_id = req.user.data.CUSTOMER_ID;  
-        const requestedCustomerID = parseInt(req.query.customer_id);  
-        if (isNaN(requestedCustomerID)) {
-          throw new HttpException('Invalid customer ID', HttpStatus.BAD_REQUEST);
-        }
-        if (customer_id !== requestedCustomerID) {
-            throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
-        }
-    
-        return this.userService.updateCustomer({...body, customer_id});
+async updateCustomer(@Body() body: SignUpDto, @Request() req) {
+    console.log("DEBUG: Token CUSTOMER_ID =", req.user.data.CUSTOMER_ID);
+    console.log("DEBUG: Query CUSTOMER_ID =", req.query.customer_id);
+    console.log("DEBUG: Body nhận được =", body);  // 🟢 Log dữ liệu nhận được
+
+    const customer_id = req.user.data.CUSTOMER_ID;
+    const requestedCustomerID = parseInt(req.query.customer_id);
+
+    if (isNaN(requestedCustomerID)) {
+        throw new HttpException('Invalid customer ID', HttpStatus.BAD_REQUEST);
     }
+    if (customer_id !== requestedCustomerID) {
+        throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
+    }
+
+    const result = await this.userService.updateCustomer({...body, customer_id});
+    console.log("DEBUG: Kết quả update =", result); // 🟢 Kiểm tra kết quả update
+    return result;
+}
+
   
     @ApiBearerAuth()
     @UseGuards(AuthGuard("jwt"))
     @HttpCode(200)
     @ApiQuery({ name: 'customer_id', required: true })
-    @Get("/get-information-customer")
-    async getInfoCustomer(@Request() req) {
+    @Get("/get-infomation-customer")
+    async getInfoCustomer(@Request() req) { 
         const customer_id  = req.user.data.CUSTOMER_ID;
         const requestedCustomerId = parseInt(req.query.customer_id);
+    
         if (customer_id !== requestedCustomerId) {
             throw new HttpException('Bạn chỉ có thể xem thông tin của chính mình', HttpStatus.FORBIDDEN);
         }
@@ -120,6 +129,57 @@ export class UserController{
         return this.userService.getInfoCustomer(customer_id);
     }
 
+    @ApiBearerAuth()
+@UseGuards(AuthGuard("jwt"))
+@HttpCode(200)
+@ApiQuery({ name: 'customer_id', required: true }) // customer_id là String
+@ApiBody({
+  schema: {
+    type: "object",
+    properties: {
+      oldPassword: { type: "string" },
+      newPassword: { type: "string" },
+      confirmPassword: { type: "string" }
+    },
+    required: ["oldPassword", "newPassword", "confirmPassword"]
+  }
+})
+@Put("/change-password")
+async changePassword(@Body() body: any, @Request() req) {
+    console.log("DEBUG: Token CUSTOMER_ID =", req.user.data.CUSTOMER_ID);
+    console.log("DEBUG: Query CUSTOMER_ID =", req.query.customer_id);
+    console.log("DEBUG: Body nhận được =", body);
+
+    const customer_id = req.user.data.CUSTOMER_ID; // ✅ Giữ nguyên kiểu String
+    const requestedCustomerID = req.query.customer_id; // ✅ Không ép kiểu thành số
+
+    if (!requestedCustomerID) {
+        throw new HttpException('Invalid customer ID', HttpStatus.BAD_REQUEST);
+    }
+    
+    if (Number(customer_id) !== Number(requestedCustomerID)) {
+        throw new HttpException('Bạn chỉ có thể thay đổi mật khẩu của chính mình', HttpStatus.FORBIDDEN);
+    }
+    
+
+    const { oldPassword, newPassword, confirmPassword } = body;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        throw new HttpException('Vui lòng nhập đầy đủ thông tin', HttpStatus.BAD_REQUEST);
+    }
+
+    if (newPassword !== confirmPassword) {
+        throw new HttpException('Mật khẩu mới và xác nhận không khớp', HttpStatus.BAD_REQUEST);
+    }
+
+    const result = await this.userService.changePassword(customer_id, oldPassword, newPassword);
+    console.log("DEBUG: Kết quả đổi mật khẩu =", result);
+    return result;
+}
+
+    
+    
+   
     
     
     // @ApiBearerAuth()

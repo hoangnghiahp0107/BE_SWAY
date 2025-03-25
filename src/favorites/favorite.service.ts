@@ -62,4 +62,71 @@ export class FavoriteService{
       }
     }
     
+    async getFavoriteLocations(customerId: number) {
+      try {
+        const locations = await this.model.$queryRaw<
+          { LOCATION_ID: number; LOCATION_NAME: string; ADDRESS: string; COORDINATES: string }[]
+        >`
+          SELECT LOCATION_ID, LOCATION_NAME, ADDRESS, ST_AsText(COORDINATES) AS COORDINATES
+          FROM FAVORITE_LOCATION
+          WHERE CUSTOMER_ID = ${customerId}
+        `;
+    
+        // Chuyển đổi dữ liệu tọa độ và thêm ID vào kết quả trả về
+        const formattedLocations = locations.map((loc) => {
+          const match = loc.COORDINATES.match(/POINT\(([^ ]+) ([^ ]+)\)/);
+          return {
+            id: loc.LOCATION_ID, // ✅ Đúng cột ID
+            location_name: loc.LOCATION_NAME,
+            address: loc.ADDRESS,
+            coordinates: match ? { lat: parseFloat(match[2]), lng: parseFloat(match[1]) } : null,
+          };
+        });
+    
+        return formattedLocations;
+      } catch (error) {
+        console.error("❌ Lỗi khi lấy danh sách địa điểm yêu thích:", error);
+        throw new HttpException(error.message || "Lỗi máy chủ!", HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
+    
+    
+
+    async removeFavoriteLocation(customer_id: string, locationId: number) {
+      try {
+        const customerIdNumber = Number(customer_id);
+        
+        // Kiểm tra xem địa điểm có tồn tại không
+        const favorite = await this.model.fAVORITE_LOCATION.findFirst({
+          where: {
+            CUSTOMER_ID: customerIdNumber,
+            LOCATION_ID: locationId,
+          },
+        });
+    
+        if (!favorite) {
+          throw new HttpException('Địa điểm yêu thích không tồn tại', HttpStatus.NOT_FOUND);
+        }
+    
+        // Xóa địa điểm yêu thích
+        await this.model.fAVORITE_LOCATION.deleteMany({
+          where: {
+            CUSTOMER_ID: customerIdNumber,
+            LOCATION_ID: locationId,
+          },
+        });
+    
+        return { message: 'Đã xóa địa điểm yêu thích thành công', statusCode: HttpStatus.OK };
+      } catch (error) {
+        console.error('❌ Lỗi khi xóa địa điểm yêu thích:', error);
+        throw new HttpException(
+          error.response?.message || error.message || 'Lỗi máy chủ khi xóa địa điểm yêu thích',
+          error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+    
+    
+    
+
 }

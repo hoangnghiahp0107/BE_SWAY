@@ -617,37 +617,83 @@ export class UserService {
      
     async updateCustomer(customerUpdate: SignUpDto) {
         try {
-            const { customer_id, email, fullname, password, gender, phone, birthday, avarta } = customerUpdate;
-            
+            console.log("DEBUG: customerUpdate nhận được =", customerUpdate);
+    
+            // Chuyển tất cả key trong request body về chữ thường để tránh lỗi
+            const normalizedUpdate = Object.keys(customerUpdate).reduce((acc, key) => {
+                acc[key.toLowerCase()] = customerUpdate[key]; // Chuyển key về chữ thường
+                return acc;
+            }, {} as any);
+    
+            console.log("DEBUG: Dữ liệu sau khi chuẩn hóa =", normalizedUpdate);
+    
+            const { customer_id, fullname, phone, birthday, gender } = normalizedUpdate;
+    
+            if (!customer_id) {
+                throw new HttpException('Thiếu customer_id', HttpStatus.BAD_REQUEST);
+            }
+    
             const existingUser = await this.model.cUSTOMER.findFirst({
-                where: { CUSTOMER_ID: customer_id}
+                where: { CUSTOMER_ID: customer_id }
             });
-        
+    
             if (!existingUser) {
                 throw new HttpException(`Người dùng không tồn tại: ${customer_id}`, HttpStatus.NOT_FOUND);
             }
-        
+    
             const updatedData: any = {};
-            if (email) updatedData.EMAIL = email;
-            if (fullname) updatedData.FULLNAME = fullname;
-            if (password) updatedData.PASSWORD = await bcrypt.hash(password, 10);
-            if (gender) updatedData.GENDER = gender;
-            if (phone) updatedData.PHONE = phone;
-            if (birthday) updatedData.BIRTHDAY = new Date(birthday);
-            if (avarta) updatedData.AVARTA = avarta;
-
+            if (fullname !== undefined) updatedData.FULLNAME = fullname;
+            if (phone !== undefined) updatedData.PHONE = phone;
+            if (birthday !== undefined) updatedData.BIRTHDAY = new Date(birthday);
+            if (gender !== undefined) updatedData.GENDER = gender;
+    
+            console.log("DEBUG: Dữ liệu cập nhật sau xử lý =", updatedData);
+    
             if (Object.keys(updatedData).length > 0) {
-                await this.model.cUSTOMER.update({
+                const updateResult = await this.model.cUSTOMER.update({
                     where: { CUSTOMER_ID: customer_id },
                     data: updatedData
                 });
+    
+                console.log("DEBUG: Kết quả update =", updateResult);
+            } else {
+                console.log("DEBUG: Không có dữ liệu nào để cập nhật.");
             }
-        
+    
             return { message: 'Cập nhật thông tin thành công' };
         } catch (error) {
-            console.error('Lỗi khi cập nhật thông tin:', error);  
+            console.error('Lỗi khi cập nhật thông tin:', error.message, error.stack);
             throw new HttpException(error.response?.message || 'Lỗi hệ thống', error.status || HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }    
+    }
+    
+    async changePassword(customer_id: number, oldPassword: string, newPassword: string) {
+        try {
+            const user = await this.model.cUSTOMER.findFirst({
+                where: { CUSTOMER_ID: customer_id }
+            });
+    
+            if (!user) {
+                throw new HttpException('Người dùng không tồn tại', HttpStatus.NOT_FOUND);
+            }
+    
+            const isMatch = await bcrypt.compare(oldPassword, user.PASSWORD);
+            if (!isMatch) {
+                throw new HttpException('Mật khẩu cũ không chính xác', HttpStatus.BAD_REQUEST);
+            }
+    
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+            await this.model.cUSTOMER.update({
+                where: { CUSTOMER_ID: customer_id },
+                data: { PASSWORD: hashedPassword }
+            });
+    
+            return { message: 'Đổi mật khẩu thành công' };
+        } catch (error) {
+            console.error('Lỗi khi đổi mật khẩu:', error.message);
+            throw new HttpException(error.response?.message || 'Lỗi hệ thống', error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
   
