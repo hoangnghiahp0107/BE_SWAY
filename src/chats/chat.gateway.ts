@@ -39,25 +39,15 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('new message')
   async handleNewMessage(
     @MessageBody() data: {
-      tripId: number;
       driverId: number;
       customerId: number;
       senderType: 'CUSTOMER' | 'DRIVER';
       content: string;
     }
   ) {
-    const { tripId, driverId, customerId, senderType, content } = data;
+    const { driverId, customerId, senderType, content } = data;
 
     try {
-      // Check if the trip exists
-      const trip = await this.prisma.tRIP_HISTORY.findUnique({
-        where: { TRIP_ID: tripId },
-      });
-
-      if (!trip) {
-        console.log('Trip does not exist');
-        return;
-      }
 
       let driver;
       let customer;
@@ -94,7 +84,6 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Save message to the database
       const newMessage = await this.prisma.cHAT_MESSAGE.create({
         data: {
-          TRIP_ID: tripId,
           DRIVER_ID: driverId,
           CUSTOMER_ID: customerId , 
           SENDER_TYPE: senderType,
@@ -106,7 +95,6 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Emit the message to all connected clients
       this.server.emit('message', {
-        tripId,
         driverId,
         senderType,
         customerId,

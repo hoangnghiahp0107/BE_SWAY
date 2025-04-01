@@ -422,8 +422,47 @@ export class UserService {
             );
         }
     }
+
+    async updateBookingDriver(customer_id: number) {
+        try {
+            // Lấy chuyến đi mới nhất của customer_id
+            const latestTrip = await this.model.tRIP_HISTORY.findFirst({
+                where: { CUSTOMER_ID: customer_id },
+                orderBy: { START_TIME: 'desc' }, // Giả sử có trường 'TRIP_DATE' để sắp xếp theo thời gian
+            });
     
+            if (!latestTrip) {
+                throw new Error('Chuyến đi không tồn tại.');
+            }
     
+            const trip_id = latestTrip.TRIP_ID;
+    
+            // Cập nhật trạng thái và tình trạng thanh toán cho chuyến đi mới nhất
+            await this.model.$queryRaw`
+                UPDATE TRIP_HISTORY
+                SET STATUS = 'COMPLETED', PAYMENT_STATUS = 'COMPLETED'
+                WHERE TRIP_ID = ${trip_id}
+            `;
+    
+            // Cập nhật trạng thái tài xế thành "AVAILABLE" sau khi hoàn thành chuyến đi
+            await this.model.$queryRaw`
+                UPDATE DRIVER
+                SET STATUS = 'AVAILABLE'
+                WHERE DRIVER_ID = ${latestTrip.DRIVER_ID}
+            `;
+    
+            return {
+                message: 'Chuyến đi đã hoàn thành và thanh toán đã được cập nhật.',
+                statusCode: HttpStatus.OK,
+            };
+        } catch (error) {
+            console.error('Lỗi khi cập nhật chuyến đi:', error);
+            throw new HttpException(
+                error.message || 'Lỗi hệ thống khi cập nhật chuyến đi',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
     
     // async bookingDriver(customer_id: number, bookingDriver: BookingDriver) {
     //     try {

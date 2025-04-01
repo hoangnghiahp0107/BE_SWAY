@@ -7,7 +7,7 @@ import { SignUpCustomer, LoginCustomer, verifyOtp, resendOtp, updateCustomer, ch
 import { UserService } from './user.service';
 import { LoginDto } from './dto/login-user.dto';
 import { ResendOtpDto, SignUpDto, VerifyOtpDto } from './dto/create-user.dto';
-import { BookingDriver } from './dto/booking.dto';
+import { BookingDriver, UpdateBooking } from './dto/booking.dto';
 
 @ApiTags("User Management")
 @Controller('/api/UserManagement')
@@ -93,15 +93,8 @@ export class UserController{
     })
     @Put("/update-personal-info")
     async updateCustomer(@Body() body: SignUpDto, @Request() req) {
-        const customer_id = req.user.data.CUSTOMER_ID;  
-        const requestedCustomerID = parseInt(req.query.customer_id);  
-        if (isNaN(requestedCustomerID)) {
-          throw new HttpException('Invalid customer ID', HttpStatus.BAD_REQUEST);
-        }
-        if (customer_id !== requestedCustomerID) {
-            throw new HttpException('Bạn chỉ có thể cập nhật thông tin của chính mình', HttpStatus.FORBIDDEN);
-        }
-    
+        const customer_id = parseInt(req.query.customer_id);  
+
         return this.userService.updateCustomer({...body, customer_id});
     }
   
@@ -171,4 +164,26 @@ export class UserController{
             );
         }
     }  
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
+    @HttpCode(200)
+    @Put('/update-booking-driver')
+    async updateBookingDriver(@Request() req, @Body() body: { customer_id: number }) {
+        try {
+            // Get the customer_id from the authenticated user
+            const customer_id = req.user.data.CUSTOMER_ID;
+    
+            // Call the service method to update the booking driver using the customer_id
+            const result = await this.userService.updateBookingDriver(customer_id);
+            return result;
+        } catch (error) {
+            console.error('Error while updating the trip:', error);
+            throw new HttpException(
+                error.message || 'An error occurred while updating the trip.',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+    
 }
