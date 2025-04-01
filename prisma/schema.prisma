@@ -7,23 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model CHAT_MESSAGE {
-  MESSAGE_ID   Int                      @id @default(autoincrement())
-  TRIP_ID      Int
-  DRIVER_ID    Int
-  CUSTOMER_ID  Int
-  SENDER_TYPE  CHAT_MESSAGE_SENDER_TYPE
-  CONTENT      String                   @db.Text
-  SENT_AT      DateTime?                @default(now()) @db.Timestamp(0)
-  TRIP_HISTORY TRIP_HISTORY             @relation(fields: [TRIP_ID], references: [TRIP_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_1")
-  DRIVER       DRIVER                   @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_2")
-  CUSTOMER     CUSTOMER                 @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_3")
-
-  @@index([CUSTOMER_ID], map: "CUSTOMER_ID")
-  @@index([DRIVER_ID], map: "DRIVER_ID")
-  @@index([TRIP_ID], map: "idx_chat_trip")
-}
-
 model CUSTOMER {
   CUSTOMER_ID       Int                 @id @default(autoincrement())
   FULLNAME          String              @db.VarChar(100)
@@ -145,7 +128,6 @@ model TRIP_HISTORY {
   STATUS              TRIP_HISTORY_STATUS?         @default(ONGOING)
   PAYMENT_METHOD      TRIP_HISTORY_PAYMENT_METHOD
   PAYMENT_STATUS      TRIP_HISTORY_PAYMENT_STATUS? @default(PENDING)
-  CHAT_MESSAGE        CHAT_MESSAGE[]
   DRIVER_RATING       DRIVER_RATING?
   CUSTOMER            CUSTOMER                     @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_1")
   DRIVER              DRIVER                       @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "TRIP_HISTORY_ibfk_2")
@@ -211,15 +193,24 @@ model WALLET_TRANSACTION {
   @@index([WALLET_ID], map: "WALLET_ID")
 }
 
+model CHAT_MESSAGE {
+  MESSAGE_ID  Int                      @id @default(autoincrement())
+  DRIVER_ID   Int
+  CUSTOMER_ID Int
+  SENDER_TYPE CHAT_MESSAGE_SENDER_TYPE
+  CONTENT     String                   @db.Text
+  SENT_AT     DateTime?                @default(now()) @db.Timestamp(0)
+  DRIVER      DRIVER                   @relation(fields: [DRIVER_ID], references: [DRIVER_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_1")
+  CUSTOMER    CUSTOMER                 @relation(fields: [CUSTOMER_ID], references: [CUSTOMER_ID], onDelete: Cascade, onUpdate: NoAction, map: "CHAT_MESSAGE_ibfk_2")
+
+  @@index([CUSTOMER_ID], map: "CUSTOMER_ID")
+  @@index([DRIVER_ID], map: "DRIVER_ID")
+}
+
 enum VEHICLE_TYPE_VEHICLE_TYPE {
   Xe_m_y   @map("Xe máy")
   Xe_4_ch_ @map("Xe 4 chỗ")
   Xe_7_ch_ @map("Xe 7 chỗ")
-}
-
-enum CHAT_MESSAGE_SENDER_TYPE {
-  CUSTOMER
-  DRIVER
 }
 
 enum DRIVER_STATUS {
@@ -268,4 +259,9 @@ enum WALLET_TRANSACTION_STATUS {
   PENDING
   COMPLETED
   FAILED
+}
+
+enum CHAT_MESSAGE_SENDER_TYPE {
+  CUSTOMER
+  DRIVER
 }

@@ -10,3 +10,7 @@ export class BookingDriver{
     payment_method: "CASH" | "CREDIT_CARD" | "E-WALLET";
     payment_status: "COMPLETED" | "PENDING" | "FAILED";
 }
+
+export class UpdateBooking{
+    trip_id: number;
+}
